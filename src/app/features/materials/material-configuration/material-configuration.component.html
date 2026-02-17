@@ -1,0 +1,157 @@
+<div class="configuration-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading-state">
+    <p-progressSpinner></p-progressSpinner>
+    <p>Loading configuration...</p>
+  </div>
+
+  <!-- Error State -->
+  <p-message 
+    *ngIf="error()" 
+    severity="error" 
+    [text]="error() || ''"
+    styleClass="error-message">
+  </p-message>
+
+  <!-- Success Message -->
+  <p-message 
+    *ngIf="saveSuccess()" 
+    severity="success" 
+    text="Configuration saved successfully!"
+    styleClass="success-message">
+  </p-message>
+
+  <!-- Configuration Content -->
+  <div *ngIf="!isLoading()" class="configuration-content">
+    <p-card styleClass="config-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <div class="header-left">
+            <i class="pi pi-cog"></i>
+            <h3>Material Field Configuration</h3>
+          </div>
+          <div class="header-right">
+            <p-iconfield iconPosition="left">
+              <p-inputicon styleClass="pi pi-search" />
+              <input 
+                pInputText
+                type="text" 
+                [(ngModel)]="searchText"
+                (input)="onSearchChange($event)"
+                placeholder="Search fields..." 
+              />
+            </p-iconfield>
+          </div>
+        </div>
+      </ng-template>
+
+      <p-table 
+        [value]="fields()" 
+        [globalFilterFields]="['fieldName', 'description', 'dataElement', 'dataType']"
+        [paginator]="true" 
+        [rows]="15"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} fields"
+        [rowsPerPageOptions]="[10, 15, 25, 50]"
+        styleClass="p-datatable-sm p-datatable-striped"
+        [tableStyle]="{'min-width': '60rem'}"
+        #dt>
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 3rem">#</th>
+            <th pSortableColumn="fieldName" style="width: 15rem">
+              Field Name
+              <p-sortIcon field="fieldName"></p-sortIcon>
+            </th>
+            <th pSortableColumn="description" style="width: 25rem">
+              Description
+              <p-sortIcon field="description"></p-sortIcon>
+            </th>
+            <th pSortableColumn="dataType" style="width: 10rem">
+              Data Type
+              <p-sortIcon field="dataType"></p-sortIcon>
+            </th>
+            <th style="width: 8rem">Length</th>
+            <th style="width: 8rem">Decimals</th>
+            <th style="width: 10rem; text-align: center">
+              Mandatory
+              <i class="pi pi-info-circle" 
+                 pTooltip="Toggle to make field required or optional"
+                 tooltipPosition="top"
+                 style="margin-left: 4px; font-size: 0.9rem; color: #666;"></i>
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-field let-rowIndex="rowIndex">
+          <tr [ngClass]="{'modified-row': isModified(field.fieldName)}">
+            <td>{{ rowIndex + 1 }}</td>
+            <td>
+              <strong>{{ field.fieldName }}</strong>
+            </td>
+            <td>{{ field.description }}</td>
+            <td>
+              <p-tag 
+                [value]="field.dataType" 
+                [severity]="getSeverity(field.dataType)">
+              </p-tag>
+            </td>
+            <td>{{ field.fieldLength || '-' }}</td>
+            <td>{{ field.decimals || '-' }}</td>
+            <td style="text-align: center">
+              <p-checkbox 
+                [(ngModel)]="field.isMandatory"
+                [binary]="true"
+                (onChange)="toggleMandatory(field)"
+                [pTooltip]="field.isMandatory ? 'Required field' : 'Optional field'"
+                tooltipPosition="top">
+              </p-checkbox>
+              <i *ngIf="isModified(field.fieldName)" 
+                 class="pi pi-exclamation-circle modified-indicator"
+                 pTooltip="Field modified"
+                 tooltipPosition="top"></i>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 2rem;">
+              <i class="pi pi-info-circle" style="font-size: 2rem; color: #999;"></i>
+              <p style="margin-top: 1rem; color: #666;">No fields found</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <!-- Actions -->
+    <div class="actions-bar">
+      <div class="actions-left">
+        <span *ngIf="hasChanges()" class="changes-indicator">
+          <i class="pi pi-exclamation-triangle"></i>
+          {{ modifiedFields().size }} field(s) modified
+        </span>
+      </div>
+      <div class="actions-right">
+        <p-button 
+          label="Reset Changes" 
+          icon="pi pi-refresh" 
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="resetChanges()"
+          [disabled]="!hasChanges() || isSaving()">
+        </p-button>
+        
+        <p-button 
+          label="Save Configuration" 
+          icon="pi pi-save" 
+          [loading]="isSaving()"
+          (onClick)="saveConfiguration()"
+          [disabled]="!hasChanges() || isSaving()">
+        </p-button>
+      </div>
+    </div>
+  </div>
+</div>

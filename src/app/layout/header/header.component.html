@@ -1,0 +1,43 @@
+<header class="header">
+  <div class="header-container">
+    <div class="logo">
+      <a routerLink="/">
+        <h1>Enterprise App</h1>
+      </a>
+    </div>
+
+    <nav class="nav" *ngIf="isAuthenticated()">
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <i class="pi pi-home"></i> Dashboard
+      </a>
+      <a routerLink="/profile" routerLinkActive="active">
+        <i class="pi pi-user"></i> Profile
+      </a>
+    </nav>
+
+    <div class="user-menu" *ngIf="isAuthenticated()">
+      <div class="user-info">
+        <p-avatar 
+          [label]="(currentUser()?.firstName?.charAt(0) || 'U') + (currentUser()?.lastName?.charAt(0) || '')" 
+          shape="circle"
+          styleClass="user-avatar"
+        ></p-avatar>
+        <div class="user-details">
+          <span class="user-name">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</span>
+          <span class="user-role">{{ currentUser()?.roles?.[0] || 'User' }}</span>
+        </div>
+      </div>
+      <p-button 
+        (onClick)="logout()" 
+        label="Logout" 
+        icon="pi pi-sign-out"
+        severity="secondary"
+        [outlined]="true"
+      ></p-button>
+    </div>
+
+    <div class="auth-buttons" *ngIf="!isAuthenticated()">
+      <p-button routerLink="/auth/login" label="Login" icon="pi pi-sign-in"></p-button>
+    </div>
+  </div>
+</header>

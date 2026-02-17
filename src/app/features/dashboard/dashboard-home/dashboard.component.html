@@ -1,0 +1,53 @@
+<div class="dashboard-container">
+  <div class="dashboard-sidebar" [class.closed]="!isSidebarOpen">
+    <div class="sidebar-header">
+      <h2>mango dbm</h2>
+      <p-button 
+        icon="pi pi-times" 
+        [text]="true"
+        [rounded]="true" 
+        (onClick)="toggleSidebar()"
+        styleClass="close-btn"
+      ></p-button>
+    </div>
+    <p-menu [model]="menuItems" styleClass="sidebar-menu"></p-menu>
+  </div>
+  
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <div class="header-controls">
+        <p-button 
+          *ngIf="!isSidebarOpen"
+          icon="pi pi-bars" 
+          [text]="true"
+          [rounded]="true" 
+          (onClick)="toggleSidebar()"
+          styleClass="menu-btn"
+        ></p-button>
+        <h1>{{ activeSection }}</h1>
+      </div>
+      <p *ngIf="currentUser()">Welcome back, {{ currentUser()?.firstName }}!</p>
+    </div>
+
+    <!-- Dynamic Content based on active section -->
+    <div class="section-content">
+      <!-- Materials Section -->
+      <app-dynamic-material-form *ngIf="activeSection === 'Materials'"></app-dynamic-material-form>
+
+      <!-- Material Configuration Section -->
+      <app-material-configuration *ngIf="activeSection === 'Material Configuration'"></app-material-configuration>
+
+      <!-- Placeholder for other sections -->
+      <div *ngIf="activeSection !== 'Materials' && activeSection !== 'Material Configuration'" class="placeholder-content">
+        <p-card>
+          <div class="placeholder-message">
+            <i class="pi pi-info-circle"></i>
+            <h2>{{ activeSection }}</h2>
+            <p>This section is under construction.</p>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+</div>
+

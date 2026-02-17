@@ -1,0 +1,251 @@
+.configuration-container {
+  padding: 20px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+
+  p {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+  }
+}
+
+.error-message,
+.success-message {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.configuration-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+// Card Header
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #007bff;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    i {
+      font-size: 1.2rem;
+      color: #007bff;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+  }
+
+  .header-right {
+    ::ng-deep {
+      .p-iconfield {
+        input {
+          width: 300px;
+          padding: 10px 12px 10px 36px;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+
+    .header-right {
+      width: 100%;
+
+      ::ng-deep .p-iconfield input {
+        width: 100%;
+      }
+    }
+  }
+}
+
+.config-card {
+  ::ng-deep .p-card-body {
+    padding: 0;
+  }
+
+  ::ng-deep .p-card-content {
+    padding: 0;
+  }
+}
+
+// Table Styling
+::ng-deep {
+  .p-datatable {
+    .p-datatable-header {
+      background-color: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      padding: 12px;
+    }
+
+    .p-datatable-thead > tr > th {
+      background-color: #f8f9fa;
+      color: #333;
+      font-weight: 600;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .p-datatable-tbody > tr {
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #f8f9fa;
+      }
+
+      > td {
+        padding: 12px;
+        border: 1px solid #e9ecef;
+      }
+    }
+  }
+
+  .p-paginator {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+  }
+}
+
+// Modified Row Highlighting
+.modified-row {
+  background-color: #fff3cd !important;
+
+  &:hover {
+    background-color: #ffe69c !important;
+  }
+}
+
+.modified-indicator {
+  margin-left: 8px;
+  color: #ff9800;
+  font-size: 1rem;
+  vertical-align: middle;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Actions Bar
+.actions-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+
+  .actions-left {
+    .changes-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #ff9800;
+      font-weight: 500;
+      font-size: 14px;
+
+      i {
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  .actions-right {
+    display: flex;
+    gap: 12px;
+
+    ::ng-deep .p-button {
+      min-width: 140px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+
+    .actions-left {
+      text-align: center;
+    }
+
+    .actions-right {
+      flex-direction: column;
+
+      ::ng-deep .p-button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// PrimeNG Overrides
+::ng-deep {
+  .p-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+
+  .p-checkbox {
+    .p-checkbox-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+
+      &.p-highlight {
+        background-color: #007bff;
+        border-color: #007bff;
+      }
+    }
+  }
+
+  .p-tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    font-weight: 600;
+  }
+
+  .p-button {
+    border-radius: 4px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .p-progressspinner {
+    width: 60px;
+    height: 60px;
+  }
+}

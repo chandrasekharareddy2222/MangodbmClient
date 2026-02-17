@@ -1,0 +1,289 @@
+.dynamic-form-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+
+  p {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+  }
+}
+
+.error-message,
+.success-message {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.material-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// Card Headers
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  
+  i {
+    font-size: 1.2rem;
+    color: #666;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+// Material Number Card
+.material-number-card {
+  ::ng-deep .p-card-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #007bff;
+  }
+
+  ::ng-deep .p-card-body {
+    padding: 24px;
+  }
+}
+
+// Fields Card
+.fields-card {
+  ::ng-deep .p-card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  ::ng-deep .p-card-body {
+    padding: 24px;
+  }
+}
+
+// Fields Grid
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Form Field
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+
+  .required-indicator {
+    color: #dc3545;
+    margin-left: 3px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+}
+
+// Field Info
+.field-info {
+  color: #6b7280;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+// Error Text
+.error-text {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+// Full Width Utility
+.w-full {
+  width: 100%;
+
+  ::ng-deep input,
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar,
+  ::ng-deep .p-inputnumber {
+    width: 100%;
+  }
+}
+
+// Invalid Field Styling
+::ng-deep {
+  input.ng-invalid.ng-touched,
+  .p-select.ng-invalid.ng-touched .p-select-label,
+  .p-datepicker.ng-invalid.ng-touched input,
+  .p-inputnumber.ng-invalid.ng-touched input {
+    border-color: #dc3545 !important;
+  }
+}
+
+// Form Actions
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px 0;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 16px;
+
+  ::ng-deep .p-button {
+    min-width: 140px;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column-reverse;
+
+    ::ng-deep .p-button {
+      width: 100%;
+    }
+  }
+}
+
+// Debug Info
+.debug-info {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #666;
+    user-select: none;
+
+    &:hover {
+      color: #333;
+    }
+  }
+
+  .debug-content {
+    margin-top: 12px;
+    font-size: 13px;
+
+    p {
+      margin: 8px 0;
+      color: #666;
+
+      strong {
+        color: #333;
+      }
+    }
+
+    pre {
+      background-color: #fff;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+      max-height: 400px;
+    }
+  }
+}
+
+// PrimeNG Overrides
+::ng-deep {
+  .p-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+
+  .p-inputtext,
+  .p-select,
+  .p-datepicker .p-inputtext,
+  .p-inputnumber-input {
+    border-radius: 4px;
+    border: 1px solid #d0d0d0;
+    padding: 10px 12px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+
+    &:enabled:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    &:enabled:hover {
+      border-color: #b0b0b0;
+    }
+  }
+
+  .p-select-overlay {
+    .p-select-items {
+      padding: 4px 0;
+
+      .p-select-option {
+        padding: 10px 12px;
+      }
+    }
+  }
+
+  .p-datepicker {
+    width: 100%;
+
+    .p-datepicker-panel {
+      min-width: 320px;
+    }
+  }
+
+  .p-button {
+    border-radius: 4px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .p-progressspinner {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+// Loading overlay for submit
+.form-submitting {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+}

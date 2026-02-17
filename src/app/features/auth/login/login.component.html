@@ -1,0 +1,72 @@
+<div class="login-container">
+  <p-card class="login-card">
+    <ng-template pTemplate="header">
+      <div class="login-header">
+        <h1>Welcome Back</h1>
+        <p>Sign in to your account</p>
+      </div>
+    </ng-template>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          pInputText
+          id="email"
+          type="email"
+          formControlName="email"
+          class="w-full"
+          [class.ng-invalid]="email?.invalid && email?.touched"
+          placeholder="Enter your email"
+        />
+        <small class="p-error" *ngIf="email?.invalid && email?.touched">
+          <span *ngIf="email?.errors?.['required']">Email is required</span>
+          <span *ngIf="email?.errors?.['email']">Please enter a valid email</span>
+        </small>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <p-password
+          id="password"
+          formControlName="password"
+          [class.ng-invalid]="password?.invalid && password?.touched"
+          placeholder="Enter your password"
+          [feedback]="false"
+          [toggleMask]="true"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+        ></p-password>
+        <small class="p-error" *ngIf="password?.invalid && password?.touched">
+          <span *ngIf="password?.errors?.['required']">Password is required</span>
+          <span *ngIf="password?.errors?.['minlength']">
+            Password must be at least 6 characters
+          </span>
+        </small>
+      </div>
+
+      <!-- Error Message -->
+      <p-message 
+        *ngIf="errorMessage()" 
+        severity="error" 
+        [text]="errorMessage() || ''"
+        styleClass="w-full"
+      ></p-message>
+
+      <!-- Submit Button -->
+      <p-button
+        type="submit"
+        label="Sign In"
+        [loading]="isLoading()"
+        [disabled]="isLoading()"
+        styleClass="w-full"
+        icon="pi pi-sign-in"
+      ></p-button>
+    </form>
+
+    <!-- Loading Spinner -->
+    <app-loading-spinner [show]="isLoading()" [fullscreen]="true"></app-loading-spinner>
+  </p-card>
+</div>
