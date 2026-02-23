@@ -1,0 +1,153 @@
+<div class="form-container">
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading-state">
+    <p-progressSpinner></p-progressSpinner>
+    <p>Loading form metadata...</p>
+  </div>
+
+  <!-- Error State -->
+  <p-message 
+    *ngIf="error()" 
+    severity="error" 
+    [text]="error() || ''"
+    styleClass="error-message">
+  </p-message>
+
+  <!-- Success Message -->
+  <p-message 
+    *ngIf="submitSuccess()" 
+    severity="success" 
+    text="Material submitted successfully!"
+    styleClass="success-message">
+  </p-message>
+
+  <!-- Form Content -->
+  <div *ngIf="!isLoading()" class="form-content">
+    <p-card styleClass="material-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <h2>New Material Entry</h2>
+        </div>
+      </ng-template>
+
+      <form [formGroup]="materialForm" (ngSubmit)="onSubmit()">
+        <!-- Material Number Section -->
+        <div class="material-number-section" *ngIf="materialNumberField">
+          <div class="material-number-header">
+            <i class="pi pi-search"></i>
+            <span>{{ materialNumberField.description }}</span>
+          </div>
+          <div class="field-group">
+            <input 
+              pInputText 
+              formControlName="MATNR"
+              [readonly]="true"
+              class="material-number-field"
+              [pTooltip]="'This field is auto-generated'"
+              tooltipPosition="right"
+            />
+          </div>
+        </div>
+
+        <!-- Dynamic Fields -->
+        <p-panel [toggleable]="true">
+          <ng-template pTemplate="header">
+            <div class="attributes-header">
+              <i class="pi pi-list"></i>
+              <span>Material Attributes</span>
+            </div>
+          </ng-template>
+
+          <div class="form-section">
+            <div class="fields-grid">
+              <div *ngFor="let field of formFields(); trackBy: trackByFieldName" class="field-group">
+                <label [for]="field.fieldName">
+                  {{ field.description }}
+                  <span *ngIf="field.isMandatory" class="mandatory">*</span>
+                  <span class="max-value" *ngIf="field.fieldLength">
+                    (Max: {{ field.fieldLength }})
+                  </span>
+                </label>
+
+                <!-- Text Input -->
+                <input 
+                  *ngIf="!isDropdownField(field) && !isDateField(field) && !isNumberField(field)"
+                  pInputText
+                  [id]="field.fieldName"
+                  [type]="getInputType(field)"
+                  [formControlName]="field.fieldName"
+                  [maxLength]="getMaxLength(field)"
+                  [pTooltip]="field.description"
+                  tooltipPosition="top"
+                />
+
+                <!-- Number Input -->
+                <p-inputNumber 
+                  *ngIf="isNumberField(field)"
+                  [id]="field.fieldName"
+                  [formControlName]="field.fieldName"
+                  [max]="999999999"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="getDecimalPlaces(field)"
+                  [pTooltip]="field.description"
+                  tooltipPosition="top"
+                ></p-inputNumber>
+
+                <!-- Date Picker -->
+                <p-datepicker 
+                  *ngIf="isDateField(field)"
+                  [id]="field.fieldName"
+                  [formControlName]="field.fieldName"
+                  dateFormat="yy-mm-dd"
+                  [showIcon]="true"
+                  [pTooltip]="field.description"
+                  tooltipPosition="top"
+                ></p-datepicker>
+
+                <!-- Dropdown -->
+                <p-select 
+                  *ngIf="isDropdownField(field)"
+                  [id]="field.fieldName"
+                  [formControlName]="field.fieldName"
+                  [options]="getFieldOptions(field)"
+                  optionLabel="label"
+                  optionValue="value"
+                  [placeholder]="'Select'"
+                  [pTooltip]="field.description"
+                  tooltipPosition="top"
+                ></p-select>
+
+                <!-- Error Message -->
+                <small *ngIf="hasError(field.fieldName)" class="error-text">
+                  {{ getErrorMessage(field.fieldName) }}
+                </small>
+              </div>
+            </div>
+          </div>
+        </p-panel>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <p-button 
+            type="submit"
+            label="Submit"
+            icon="pi pi-check"
+            [loading]="isSubmitting()"
+            [disabled]="materialForm.invalid || isSubmitting()"
+          ></p-button>
+          <p-button 
+            type="button"
+            label="Reset"
+            icon="pi pi-times"
+            severity="secondary"
+            (onClick)="resetForm()"
+            [disabled]="isSubmitting()"
+          ></p-button>
+        </div>
+      </form>
+    </p-card>
+  </div>
+</div>

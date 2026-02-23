@@ -1,0 +1,246 @@
+<div class="configuration-container">
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading-state">
+    <p-progressSpinner></p-progressSpinner>
+    <p>Loading configuration...</p>
+  </div>
+
+  <!-- Error State -->
+  <p-message 
+    *ngIf="error()" 
+    severity="error" 
+    [text]="error() || ''"
+    styleClass="error-message">
+  </p-message>
+
+  <!-- Success Message -->
+  <p-message 
+    *ngIf="saveSuccess()" 
+    severity="success" 
+    text="Configuration saved successfully!"
+    styleClass="success-message">
+  </p-message>
+
+  <!-- Configuration Content -->
+  <div *ngIf="!isLoading()" class="configuration-content">
+    <p-card styleClass="config-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <div class="header-left">
+            <i class="pi pi-cog"></i>
+            <h3>Material Field Configuration</h3>
+          </div>
+          <div class="header-right">
+            <p-iconfield iconPosition="left">
+              <p-inputicon styleClass="pi pi-search" />
+              <input 
+                pInputText
+                type="text" 
+                [(ngModel)]="searchText"
+                (input)="onSearchChange($event)"
+                placeholder="Search fields..." 
+              />
+            </p-iconfield>
+            <p-button 
+              [icon]="isListening() ? 'pi pi-circle-fill' : 'pi pi-microphone'"
+              [class.listening]="isListening()"
+              (onClick)="startVoiceRecognition()"
+              [pTooltip]="isListening() ? 'Listening...' : 'Click to use voice recognition'"
+              tooltipPosition="bottom"
+              [rounded]="true"
+              text
+            ></p-button>
+          </div>
+        </div>
+        
+        <!-- CSV Import Section -->
+        <div class="csv-import-section">
+          <div class="csv-import-header">
+            <i class="pi pi-upload"></i>
+            <span>Import Field Metadata from CSV</span>
+          </div>
+          <div class="csv-import-controls">
+            <div class="file-input-wrapper">
+              <input 
+                type="file" 
+                #csvFileInput
+                accept=".csv"
+                (change)="onCsvFileSelected($event)"
+                class="csv-file-input"
+                [disabled]="isImporting()"
+              />
+              <p-button 
+                icon="pi pi-folder-open"
+                [disabled]="isImporting()"
+                (onClick)="csvFileInput.click()"
+                [pTooltip]="'Select a CSV file to import'"
+                tooltipPosition="bottom"
+                text
+                severity="secondary"
+              ></p-button>
+            </div>
+            <span class="selected-file" *ngIf="selectedCsvFile()">
+              {{ selectedCsvFile()?.name }}
+            </span>
+            <p-button 
+              label="Submit"
+              icon="pi pi-check"
+              [loading]="isImporting()"
+              [disabled]="!selectedCsvFile() || isImporting()"
+              (onClick)="submitCsvImport()"
+              severity="success"
+            ></p-button>
+            <p-button 
+              label="Refresh"
+              icon="pi pi-refresh"
+              [disabled]="!selectedCsvFile() || isImporting()"
+              (onClick)="refreshCsvImport()"
+              severity="secondary"
+              text
+            ></p-button>
+          </div>
+        </div>
+
+        <!-- Import Results Summary -->
+        <div *ngIf="importResult()" class="import-results">
+          <div class="results-header">
+            <i class="pi pi-check-circle"></i>
+            <span>Import Summary</span>
+            <div class="header-actions">
+              <p-button 
+                *ngIf="canDownloadResultFile()"
+                icon="pi pi-download"
+                label="Download Result"
+                [text]="true"
+                severity="secondary"
+                (onClick)="downloadImportResult()"
+                [pTooltip]="'Download the detailed import result CSV file'"
+                tooltipPosition="left"
+              ></p-button>
+              <p-button 
+                icon="pi pi-times"
+                [text]="true"
+                severity="secondary"
+                (onClick)="clearImportResults()"
+                [pTooltip]="'Clear summary'"
+                tooltipPosition="left"
+              ></p-button>
+            </div>
+          </div>
+          <div class="results-grid">
+            <div class="result-item total">
+              <span class="label">Total Records</span>
+              <span class="value">{{ importResult()?.totalRecords }}</span>
+            </div>
+            <div class="result-item inserted">
+              <span class="label">Inserted</span>
+              <span class="value">{{ importResult()?.insertedRecords }}</span>
+            </div>
+            <div class="result-item skipped">
+              <span class="label">Skipped</span>
+              <span class="value">{{ importResult()?.skippedRecords }}</span>
+            </div>
+            <div class="result-item failed" *ngIf="(importResult()?.failedRecords || 0) > 0">
+              <span class="label">Failed</span>
+              <span class="value">{{ importResult()?.failedRecords }}</span>
+            </div>
+          </div>
+          <div *ngIf="(importResult()?.failedRecords || 0) > 0" class="failure-message">
+            <i class="pi pi-info-circle"></i>
+            <span>Some records failed. Download the result file to view and fix errors.</span>
+          </div>
+        </div>
+      </ng-template>
+
+      <!-- Configuration Table -->
+      <p-table 
+        #dt
+        [value]="fields()"
+        [paginator]="true" 
+        [rows]="10"
+        [globalFilterFields]="['fieldName', 'description', 'dataType']"
+        [tableStyle]="{ 'min-width': '50rem' }"
+        responsiveLayout="scroll"
+        styleClass="config-table"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="fieldName">
+              Field Name <p-sortIcon field="fieldName"></p-sortIcon>
+            </th>
+            <th pSortableColumn="description">
+              Description <p-sortIcon field="description"></p-sortIcon>
+            </th>
+            <th pSortableColumn="dataType">
+              Data Type <p-sortIcon field="dataType"></p-sortIcon>
+            </th>
+            <th class="mandatory-col">Mandatory</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-field>
+          <tr [class.modified]="isModified(field.fieldName)">
+            <td>
+              <strong>{{ field.fieldName }}<span *ngIf="field.isMandatory" class="mandatory-indicator">*</span></strong>
+            </td>
+            <td>{{ field.description }}</td>
+            <td>
+              <p-tag 
+                [value]="field.dataType"
+                [severity]="getSeverity(field.dataType)"
+              ></p-tag>
+            </td>
+            <td class="mandatory-col">
+              <p-checkbox
+                [(ngModel)]="field.isMandatory"
+                [binary]="true"
+                (onChange)="toggleMandatory(field)"
+                [attr.aria-label]="'Toggle mandatory for ' + field.fieldName"
+              ></p-checkbox>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4" class="empty-message">No fields found</td>
+          </tr>
+        </ng-template>
+      </p-table>
+
+      <!-- Action Buttons -->
+      <ng-template pTemplate="footer">
+        <div class="footer-actions">
+          <div class="summary">
+            <span *ngIf="hasChanges()" class="changes-count">
+              {{ modifiedFields().size }} change(s)
+            </span>
+          </div>
+          <div class="button-group">
+            <p-button 
+              label="Save Changes"
+              icon="pi pi-save"
+              [disabled]="!hasChanges() || isSaving()"
+              [loading]="isSaving()"
+              (onClick)="saveConfiguration()"
+              [pTooltip]="!hasChanges() ? 'No changes to save' : 'Save configuration changes'"
+              tooltipPosition="top"
+            ></p-button>
+            <p-button 
+              label="Reset"
+              icon="pi pi-refresh"
+              severity="secondary"
+              [disabled]="!hasChanges() || isSaving()"
+              (onClick)="resetChanges()"
+              [pTooltip]="!hasChanges() ? 'No changes to reset' : 'Discard all changes'"
+              tooltipPosition="top"
+            ></p-button>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+</div>

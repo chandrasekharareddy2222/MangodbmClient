@@ -13,6 +13,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -44,8 +46,10 @@ import { environment } from '../../../../environments/environment';
     TooltipModule,
     TagModule,
     IconFieldModule,
-    InputIconModule
+    InputIconModule,
+    ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './material-configuration.component.html',
   styleUrl: './material-configuration.component.scss'
 })
@@ -65,13 +69,21 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
   searchText: string = '';
   private searchSubject = new Subject<string>();
 
+  // Voice Recognition
+  isListening = signal<boolean>(false);
+  private recognition: any; // Web Speech API SpeechRecognition
+  private lastProcessedTranscript: string = ''; // Track to prevent duplicate processing
+
   // Table reference
   @ViewChild('dt') table!: Table;
 
   constructor(
     private metadataService: MetadataService,
-    private http: HttpClient
-  ) {}
+    private http: HttpClient,
+    private messageService: MessageService
+  ) {
+    this.initializeVoiceRecognition();
+  }
 
   ngOnInit(): void {
     this.loadMetadata();
@@ -207,9 +219,201 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Initialize Web Speech API for voice recognition
+   */
+  private initializeVoiceRecognition(): void {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      this.recognition = new SpeechRecognition();
+      this.recognition.continuous = false;
+      this.recognition.interimResults = false;
+      this.recognition.lang = 'en-US';
+
+      this.recognition.onstart = () => {
+        this.isListening.set(true);
+      };
+
+      this.recognition.onend = () => {
+        this.isListening.set(false);
+        this.lastProcessedTranscript = ''; // Reset for next recognition session
+      };
+
+      this.recognition.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        this.handleVoiceInput(transcript);
+      };
+
+      this.recognition.onerror = (event: any) => {
+        console.error('Voice recognition error:', event.error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Voice Recognition Error',
+          detail: `Error: ${event.error}`,
+          life: 3000
+        });
+        this.isListening.set(false);
+      };
+    }
+  }
+
+  /**
+   * Start voice recognition
+   */
+  startVoiceRecognition(): void {
+    if (this.recognition && !this.isListening()) {
+      try {
+        this.recognition.start();
+      } catch (e) {
+        console.error('Failed to start voice recognition:', e);
+      }
+    }
+  }
+
+  /**
+   * Handle voice input - update search field and process commands
+   */
+  private handleVoiceInput(transcript: string): void {
+    const trimmedText = transcript.trim().toLowerCase();
+    
+    // Prevent duplicate processing from multiple onresult events
+    if (trimmedText === this.lastProcessedTranscript) {
+      return;
+    }
+    
+    this.lastProcessedTranscript = trimmedText;
+    
+    // Check if this is a mandatory command
+    const mandatoryMatch = /make\s+(.+?)\s+mandatory/i.exec(trimmedText);
+    
+    if (mandatoryMatch) {
+      // It's a command - extract just the field description for search
+      const fieldDescription = mandatoryMatch[1].trim();
+      this.searchText = fieldDescription;
+      this.searchSubject.next(fieldDescription);
+    } else {
+      // Check if this is an optional command
+      const optionalMatch = /make\s+(.+?)\s+optional/i.exec(trimmedText);
+      
+      if (optionalMatch) {
+        // It's a command - extract just the field description for search
+        const fieldDescription = optionalMatch[1].trim();
+        this.searchText = fieldDescription;
+        this.searchSubject.next(fieldDescription);
+      } else {
+        // Regular search text - place full recognized text into search input
+        this.searchText = trimmedText;
+        this.searchSubject.next(trimmedText);
+      }
+    }
+
+    // Process voice command if it contains command keywords
+    this.processCommand(trimmedText);
+  }
+
+  /**
+   * Process voice commands (e.g., "make Loading Units mandatory" or "make Loading Units optional")
+   */
+  processCommand(text: string): void {
+    // Check for mandatory command
+    const mandatoryMatch = /make\s+(.+?)\s+mandatory/i.exec(text);
+    
+    if (mandatoryMatch) {
+      const fieldDescriptionPart = mandatoryMatch[1].trim();
+      
+      // Find matching field by description (case-insensitive)
+      const matchingField = this.fields().find(field =>
+        field.description.toLowerCase().includes(fieldDescriptionPart.toLowerCase())
+      );
+
+      if (matchingField) {
+        // Update the field's mandatory property
+        matchingField.isMandatory = true;
+        
+        // Track the modification
+        const modified = new Set(this.modifiedFields());
+        modified.add(matchingField.fieldName);
+        this.modifiedFields.set(modified);
+        this.saveSuccess.set(false);
+        
+        // Show toast confirmation
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Field Updated',
+          detail: `${matchingField.description} is now Mandatory`,
+          life: 3000
+        });
+
+        // Auto-save the configuration after voice command
+        setTimeout(() => {
+          this.saveConfiguration();
+        }, 500);
+      } else {
+        // Field not found
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Field Not Found',
+          detail: `Could not find field matching: ${fieldDescriptionPart}`,
+          life: 3000
+        });
+      }
+      return;
+    }
+
+    // Check for optional command
+    const optionalMatch = /make\s+(.+?)\s+optional/i.exec(text);
+    
+    if (optionalMatch) {
+      const fieldDescriptionPart = optionalMatch[1].trim();
+      
+      // Find matching field by description (case-insensitive)
+      const matchingField = this.fields().find(field =>
+        field.description.toLowerCase().includes(fieldDescriptionPart.toLowerCase())
+      );
+
+      if (matchingField) {
+        // Update the field's mandatory property
+        matchingField.isMandatory = false;
+        
+        // Track the modification
+        const modified = new Set(this.modifiedFields());
+        modified.add(matchingField.fieldName);
+        this.modifiedFields.set(modified);
+        this.saveSuccess.set(false);
+        
+        // Show toast confirmation
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Field Updated',
+          detail: `${matchingField.description} is now Optional`,
+          life: 3000
+        });
+
+        // Auto-save the configuration after voice command
+        setTimeout(() => {
+          this.saveConfiguration();
+        }, 500);
+      } else {
+        // Field not found
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Field Not Found',
+          detail: `Could not find field matching: ${fieldDescriptionPart}`,
+          life: 3000
+        });
+      }
+    }
+  }
+
+  /**
    * Cleanup
    */
   ngOnDestroy(): void {
     this.searchSubject.complete();
+    if (this.recognition) {
+      this.recognition.abort();
+    }
   }
 }

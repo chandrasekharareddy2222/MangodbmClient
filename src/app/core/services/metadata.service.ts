@@ -100,19 +100,35 @@ export class MetadataService {
   }
 
   /**
-   * Get all unique table groups
-   * @returns Array of table group names
+   * Import field metadata from CSV file
+   * @param file CSV file to import
+   * @returns Observable with import results including downloadable result file
    */
-  getTableGroups(): string[] {
-    const groups = new Set(this.metadataCache().map(field => field.tableGroup));
-    return Array.from(groups).sort();
-  }
+  importFieldMetadataFromCsv(file: File): Observable<ApiResponse<{
+    totalRecords: number;
+    inserted: number;
+    failed: number;
+    skipped: number;
+    resultFileName: string;
+    resultFileContent: string; // base64 encoded CSV content
+  }>> {
+    const formData = new FormData();
+    formData.append('file', file);
 
-  /**
-   * Get mandatory fields
-   * @returns Array of mandatory field metadata
-   */
-  getMandatoryFields(): FieldMetadata[] {
-    return this.metadataCache().filter(field => field.isMandatory);
+    return this.http.post<ApiResponse<{
+      totalRecords: number;
+      inserted: number;
+      failed: number;
+      skipped: number;
+      resultFileName: string;
+      resultFileContent: string;
+    }>>(`${environment.apiUrl}/field-metadata/import-csv`, formData).pipe(
+      tap({
+        next: () => {
+          // Refresh metadata cache after successful import
+          this.getFieldMetadata().subscribe();
+        }
+      })
+    );
   }
 }

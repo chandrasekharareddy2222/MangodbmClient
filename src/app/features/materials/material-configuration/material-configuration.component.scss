@@ -59,12 +59,20 @@
   }
 
   .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
     ::ng-deep {
       .p-iconfield {
         input {
           width: 300px;
           padding: 10px 12px 10px 36px;
         }
+      }
+
+      .p-button {
+        flex-shrink: 0;
       }
     }
   }

@@ -151,13 +151,13 @@ export class DynamicValidators {
   static validDate(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = control.value;
-      // Only validate if field has a value
       if (value !== null && value !== undefined && value !== '') {
-        const date = new Date(value);
-        if (isNaN(date.getTime())) {
+        // Check if it's a valid date string (YYYY-MM-DD or YYYYMMDD format)
+        const isValid = /^\d{4}-\d{2}-\d{2}$/.test(value) || /^\d{8}$/.test(value);
+        if (!isValid) {
           return { 
             validDate: { 
-              message: 'Invalid date format' 
+              message: 'Please enter a valid date (YYYY-MM-DD)' 
             } 
           };
         }
@@ -167,16 +167,15 @@ export class DynamicValidators {
   }
 
   /**
-   * Valid option validator (for dropdown fields)
-   * @param validOptions Array of valid option values
+   * Valid option validator for dropdown fields
    */
-  static validOption(validOptions: string[]): ValidatorFn {
+  static validOption(validValues: string[]): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = control.value;
-      if (value && !validOptions.includes(value)) {
+      if (value !== null && value !== undefined && value !== '' && !validValues.includes(value)) {
         return { 
           validOption: { 
-            message: 'Please select a valid option' 
+            message: 'Invalid selection' 
           } 
         };
       }
@@ -185,18 +184,30 @@ export class DynamicValidators {
   }
 
   /**
-   * Get error message from validation errors
-   * @param errors Validation errors object
-   * @returns Error message string
+   * Get error message from errors object
    */
   static getErrorMessage(errors: ValidationErrors | null): string {
-    if (!errors) {
-      return '';
-    }
-
-    const errorKey = Object.keys(errors)[0];
-    const error = errors[errorKey];
+    if (!errors) return '';
     
-    return error?.message || 'Invalid value';
+    if (errors['required']) {
+      return errors['required'].message || 'This field is required';
+    }
+    if (errors['maxLength']) {
+      return errors['maxLength'].message;
+    }
+    if (errors['numericOnly']) {
+      return errors['numericOnly'].message;
+    }
+    if (errors['decimal']) {
+      return errors['decimal'].message;
+    }
+    if (errors['validDate']) {
+      return errors['validDate'].message;
+    }
+    if (errors['validOption']) {
+      return errors['validOption'].message;
+    }
+    
+    return 'Invalid field';
   }
 }

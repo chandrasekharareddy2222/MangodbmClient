@@ -1,0 +1,542 @@
+.configuration-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 1rem;
+
+    p-progressSpinner {
+      ::ng-deep {
+        .p-progress-spinner-svg {
+          width: 50px;
+          height: 50px;
+        }
+      }
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #666;
+    }
+  }
+
+  .error-message,
+  .success-message {
+    margin-bottom: 1.5rem;
+    width: 100%;
+  }
+
+  .configuration-content {
+    .config-card {
+      ::ng-deep {
+        .p-card {
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 2rem;
+        padding-top: 15px;
+        padding-left: 10px;
+
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          flex: 1;
+
+          i {
+            font-size: 1.5rem;
+            color: #3498db;
+          }
+
+          h3 {
+            margin: 0;
+            font-size: 1.75rem;
+            color: #333;
+          }
+        }
+
+        .header-right {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          flex: 0 1 auto;
+
+          p-iconfield {
+            ::ng-deep {
+              input {
+                width: 250px;
+              }
+            }
+          }
+
+          p-button {
+            &.listening {
+              ::ng-deep {
+                .p-button {
+                  background-color: #e74c3c;
+                  border-color: #e74c3c;
+                  color: white;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      /* CSV Import Section */
+      .csv-import-section {
+        border-top: 1px solid #e5e7eb;
+        margin-top: 1.5rem;
+        margin-left: 20px;
+        padding-top: 1.5rem;
+
+        .csv-import-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #333;
+
+          i {
+            font-size: 1.25rem;
+            color: #27ae60;
+          }
+        }
+
+        .csv-import-controls {
+          display: flex;
+          gap: 1rem;
+          align-items: center;
+          flex-wrap: wrap;
+          margin-bottom: 2rem;
+
+          .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+
+            .csv-file-input {
+              display: none;
+            }
+
+            p-button {
+              ::ng-deep {
+                .p-button {
+                  padding: 0.5rem;
+                }
+              }
+            }
+          }
+
+          .selected-file {
+            padding: 0.5rem 1rem;
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #1976d2;
+            font-weight: 500;
+          }
+
+          p-button {
+            ::ng-deep {
+              .p-button {
+                font-weight: 500;
+              }
+            }
+          }
+        }
+      }
+
+      /* Import Results Summary */
+      .import-results {
+        margin-top: 0;
+        margin-left: 40px;
+        padding: 1.5rem;
+        background-color: #f0fdf4;
+        border-left: 4px solid #27ae60;
+        border-radius: 4px;
+
+        .results-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 1.5rem;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #1b5e20;
+          justify-content: space-between;
+
+          i {
+            font-size: 1.5rem;
+            color: #27ae60;
+          }
+
+          .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            p-button {
+              ::ng-deep {
+                .p-button {
+                  padding: 0.25rem 0.5rem;
+                  height: auto;
+                }
+              }
+            }
+          }
+
+          p-button {
+            ::ng-deep {
+              .p-button {
+                padding: 0.25rem 0.5rem;
+                height: auto;
+              }
+            }
+          }
+        }
+
+        .results-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+          gap: 1.25rem;
+          margin-bottom: 1rem;
+
+          .result-item {
+            padding: 1.25rem 1rem;
+            background-color: white;
+            border-radius: 6px;
+            border: 1px solid #d4edda;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+            .label {
+              font-size: 0.8rem;
+              color: #666;
+              text-align: center;
+              margin-bottom: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+
+            .value {
+              font-size: 2rem;
+              font-weight: 800;
+              color: #27ae60;
+              line-height: 1;
+            }
+
+            &.inserted .value {
+              color: #27ae60;
+            }
+
+            &.skipped .value {
+              color: #f59e0b;
+            }
+
+            &.error .value {
+              color: #ef4444;
+            }
+
+            &.failed .value {
+              color: #ef4444;
+            }
+
+            &.total .value {
+              color: #3b82f6;
+            }
+          }
+        }
+
+        .failure-message {
+          margin-top: 1rem;
+          padding: 1rem;
+          background-color: #fef3c7;
+          border-left: 4px solid #f59e0b;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          color: #78350f;
+          font-size: 0.95rem;
+
+          i {
+            font-size: 1.2rem;
+            color: #f59e0b;
+            flex-shrink: 0;
+          }
+
+          span {
+            flex: 1;
+          }
+        }
+      }
+
+      .config-table {
+        ::ng-deep {
+          .p-datatable {
+            .p-datatable-thead > tr > th {
+              background-color: #f5f5f5;
+              color: #333;
+              font-weight: 600;
+              border-bottom: 2px solid #ddd;
+              padding: 1rem;
+            }
+
+            .p-datatable-tbody > tr {
+              transition: background-color 0.2s ease;
+
+              &:hover {
+                background-color: #f9f9f9;
+              }
+
+              &.modified {
+                background-color: #fffacd;
+
+                &:hover {
+                  background-color: #fff8dc;
+                }
+              }
+
+              > td {
+                padding: 1rem;
+                border-bottom: 1px solid #eee;
+                vertical-align: middle;
+              }
+            }
+
+            .p-datatable-emptymessage > tr > td {
+              text-align: center;
+              padding: 2rem 1rem;
+              color: #999;
+            }
+          }
+
+          .p-paginator {
+            background-color: #f5f5f5;
+            border-top: 1px solid #ddd;
+          }
+        }
+
+        .mandatory-col {
+          text-align: center;
+          width: 150px;
+        }
+
+        .mandatory-indicator {
+          color: #ef4444;
+          font-weight: bold;
+          margin-left: 0.25rem;
+        }
+
+        .empty-message {
+          text-align: center;
+          padding: 2rem 1rem;
+          color: #999;
+        }
+      }
+
+      .footer-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 0;
+        border-top: 1px solid #eee;
+        margin-top: 1.5rem;
+
+        .summary {
+          .changes-count {
+            padding: 0.5rem 1rem;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            color: #1976d2;
+            font-weight: 500;
+            font-size: 0.9rem;
+          }
+        }
+
+        .button-group {
+          display: flex;
+          gap: 1rem;
+
+          p-button {
+            ::ng-deep {
+              .p-button {
+                font-weight: 500;
+
+                &:disabled {
+                  opacity: 0.6;
+                  cursor: not-allowed;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .configuration-container {
+    padding: 1.5rem 0.5rem;
+
+    .configuration-content {
+      .config-card {
+        .card-header {
+          flex-direction: column;
+          gap: 1rem;
+
+          .header-left {
+            width: 100%;
+            justify-content: flex-start;
+          }
+
+          .header-right {
+            width: 100%;
+            justify-content: flex-start;
+
+            p-iconfield {
+              ::ng-deep {
+                input {
+                  width: 100%;
+                }
+              }
+            }
+          }
+        }
+
+        .csv-import-section {
+          .csv-import-controls {
+            flex-direction: column;
+            align-items: stretch;
+
+            .file-input-wrapper {
+              width: 100%;
+            }
+
+            .selected-file {
+              width: 100%;
+              text-align: center;
+            }
+
+            p-button {
+              width: 100%;
+            }
+          }
+
+          .import-results {
+            .results-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .configuration-container {
+    padding: 1rem 0.5rem;
+
+    .configuration-content {
+      .config-card {
+        .card-header {
+          .header-left {
+            i {
+              display: none;
+            }
+
+            h3 {
+              font-size: 1.3rem;
+            }
+          }
+        }
+
+        .csv-import-section {
+          .csv-import-header {
+            font-size: 0.95rem;
+          }
+
+          .csv-import-controls {
+            flex-direction: column;
+            align-items: stretch;
+
+            .file-input-wrapper {
+              width: 100%;
+            }
+
+            .selected-file {
+              width: 100%;
+              text-align: center;
+              font-size: 0.9rem;
+            }
+
+            p-button {
+              width: 100%;
+            }
+          }
+
+          .import-results {
+            .results-grid {
+              grid-template-columns: 1fr;
+            }
+          }
+        }
+      }
+
+      .config-table {
+        ::ng-deep {
+          .p-datatable {
+            font-size: 0.9rem;
+
+            .p-datatable-thead > tr > th,
+            .p-datatable-tbody > tr > td {
+              padding: 0.75rem 0.5rem;
+            }
+          }
+        }
+
+        .mandatory-col,
+        .actions-col {
+          width: 100px;
+        }
+      }
+
+      .footer-actions {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+
+        .button-group {
+          width: 100%;
+
+          p-button {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,4 +1,7 @@
 <div class="configuration-container">
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+
   <!-- Loading State -->
   <div *ngIf="isLoading()" class="loading-state">
     <p-progressSpinner></p-progressSpinner>
@@ -41,6 +44,17 @@
                 placeholder="Search fields..." 
               />
             </p-iconfield>
+            <p-button 
+              [icon]="isListening() ? 'pi pi-circle-fill' : 'pi pi-microphone'"
+              [class.listening]="isListening()"
+              (onClick)="startVoiceRecognition()"
+              [disabled]="isLoading()"
+              [severity]="isListening() ? 'danger' : 'secondary'"
+              [rounded]="true"
+              [text]="true"
+              pTooltip="Click to start voice recognition"
+              tooltipPosition="left">
+            </p-button>
           </div>
         </div>
       </ng-template>
