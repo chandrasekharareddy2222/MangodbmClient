@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
+import { CheckTableService } from '../../core/services/check-table.service';
+import { CheckTable } from '../../core/models/check-table.model';
 
 @Component({
     selector: 'app-menu',
@@ -18,10 +20,67 @@ import { AppMenuitem } from './app.menuitem';
         }
     </ul> `,
 })
-export class AppMenu {
+export class AppMenu implements OnInit {
+    private checkTableService = inject(CheckTableService);
     model: MenuItem[] = [];
 
+    constructor() {
+        // Auto-rebuild menu whenever check tables signal changes
+        effect(() => {
+            const tables = this.checkTableService.checkTables();
+            console.log('Effect triggered - Tables updated:', tables);
+            this.buildMenu();
+        });
+    }
+
     ngOnInit() {
+        // Load check tables from API
+        console.log('AppMenu ngOnInit - Fetching check tables...');
+        this.checkTableService.fetchCheckTables().subscribe({
+            next: () => {
+                console.log('Check tables fetch completed successfully');
+            },
+            error: (error) => {
+                console.error('Failed to load check tables for menu', error);
+            }
+        });
+    }
+
+    /**
+     * Generate dynamic menu items from loaded check tables
+     */
+    generateCheckTableMenuItems(): MenuItem[] {
+        const tables = this.checkTableService.checkTables();
+        console.log('Generating menu items from tables:', tables);
+        
+        if (!tables || tables.length === 0) {
+            console.log('No tables available for menu');
+            return [];
+        }
+
+        const items = tables.map((table: CheckTable) => {
+            const label = this.checkTableService.getDisplayName(table);
+            const routeId = table.id || table.checkTableName;
+            console.log('Creating menu item:', { label, routeId });
+            return {
+                label,
+                icon: 'pi pi-fw pi-table',
+                routerLink: ['/materials/check-table', routeId]
+            };
+        });
+        
+        console.log('Generated menu items count:', items.length);
+        return items;
+    }
+
+    /**
+     * Build the complete menu structure
+     */
+    buildMenu() {
+        const checkTableItems = this.generateCheckTableMenuItems();
+        console.log('Building menu with', checkTableItems.length, 'table items');
+        
+        // Create a NEW array reference to trigger change detection
         this.model = [
             {
                 label: 'Home',
@@ -32,15 +91,20 @@ export class AppMenu {
                 icon: 'pi pi-fw pi-box',
                 items: [
                     {
-                        label: 'Material Entry',
-                        icon: 'pi pi-fw pi-plus-circle',
-                        routerLink: ['/materials/form']
+                        label: 'Check Table Configuration',
+                        icon: 'pi pi-check-square',
+                        items: checkTableItems
                     },
                     {
                         label: 'Configuration',
                         icon: 'pi pi-fw pi-cog',
                         routerLink: ['/materials/configuration']
-                    }
+                    },
+                    {
+                        label: 'Material Entry',
+                        icon: 'pi pi-fw pi-plus-circle',
+                        routerLink: ['/materials/form']
+                    },
                 ]
             },
             {
