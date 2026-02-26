@@ -122,7 +122,7 @@ export class MetadataService {
       skipped: number;
       resultFileName: string;
       resultFileContent: string;
-    }>>(`${environment.apiUrl}/field-metadata/import-csv`, formData).pipe(
+    }>>(`${environment.apiUrl}/field-metadata/import`, formData).pipe(
       tap({
         next: () => {
           // Refresh metadata cache after successful import

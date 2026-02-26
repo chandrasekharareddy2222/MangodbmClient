@@ -60,14 +60,14 @@
         <div class="csv-import-section">
           <div class="csv-import-header">
             <i class="pi pi-upload"></i>
-            <span>Import Field Metadata from CSV</span>
+            <span>Import Field Metadata from CSV or Excel</span>
           </div>
           <div class="csv-import-controls">
             <div class="file-input-wrapper">
               <input 
                 type="file" 
                 #csvFileInput
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 (change)="onCsvFileSelected($event)"
                 class="csv-file-input"
                 [disabled]="isImporting()"
@@ -76,7 +76,7 @@
                 icon="pi pi-folder-open"
                 [disabled]="isImporting()"
                 (onClick)="csvFileInput.click()"
-                [pTooltip]="'Select a CSV file to import'"
+                [pTooltip]="'Select a CSV or Excel file to import'"
                 tooltipPosition="bottom"
                 text
                 severity="secondary"
@@ -154,6 +154,63 @@
           </div>
         </div>
       </ng-template>
+
+      <!-- Download Options Dialog -->
+      <p-dialog 
+        [(visible)]="showDownloadChoiceDialog"
+        header="Download Import Results"
+        [modal]="true"
+        [style]="{width: '500px'}"
+        [draggable]="false"
+        [resizable]="false"
+      >
+        <div class="download-options">
+          <p class="mb-4">Choose what data you would like to download:</p>
+          
+          <div class="option-buttons">
+            <p-button 
+              *ngIf="(importResult()?.insertedRecords || 0) > 0"
+              label="Success Records ({{ importResult()?.insertedRecords }})"
+              icon="pi pi-check"
+              severity="success"
+              [text]="false"
+              [outlined]="true"
+              class="w-full mb-3"
+              (onClick)="downloadFilteredResults('success')"
+            ></p-button>
+
+            <p-button 
+              *ngIf="(importResult()?.failedRecords || 0) > 0"
+              label="Error Records ({{ importResult()?.failedRecords }})"
+              icon="pi pi-exclamation-triangle"
+              severity="danger"
+              [text]="false"
+              [outlined]="true"
+              class="w-full mb-3"
+              (onClick)="downloadFilteredResults('errors')"
+            ></p-button>
+
+            <p-button 
+              label="Both Records"
+              icon="pi pi-download"
+              severity="info"
+              [text]="false"
+              [outlined]="true"
+              class="w-full"
+              (onClick)="downloadFilteredResults('both')"
+            ></p-button>
+          </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+          <p-button 
+            label="Cancel"
+            icon="pi pi-times"
+            (onClick)="showDownloadChoiceDialog = false"
+            [text]="true"
+          ></p-button>
+        </ng-template>
+      </p-dialog>
 
       <!-- Configuration Table -->
       <p-table 

@@ -16,6 +16,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { DialogModule } from 'primeng/dialog';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -48,7 +49,8 @@ import { FieldMetadata } from '../../../core/models/field-metadata.model';
     TagModule,
     IconFieldModule,
     InputIconModule,
-    ToastModule
+    ToastModule,
+    DialogModule
   ],
   providers: [MessageService],
   templateUrl: './material-configuration.component.html',
@@ -78,6 +80,8 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
     content: string; // base64 encoded
   } | null>(null);
   importErrors = signal<string[]>([]); 
+  showDownloadChoiceDialog = false;
+  downloadOptions: any = {};
 
   // Computed
   hasChanges = computed(() => this.modifiedFields().size > 0);
@@ -424,11 +428,14 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!file.name.endsWith('.csv')) {
+    const fileName = file.name.toLowerCase();
+    const isValidFile = fileName.endsWith('.csv') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+    
+    if (!isValidFile) {
       this.messageService.add({
         severity: 'error',
         summary: 'Invalid File',
-        detail: 'Please select a CSV file',
+        detail: 'Please select a CSV or Excel file (.csv, .xlsx, .xls)',
         life: 3000
       });
       return;
@@ -452,7 +459,7 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
       this.messageService.add({
         severity: 'warn',
         summary: 'No File Selected',
-        detail: 'Please select a CSV file first',
+        detail: 'Please select a CSV or Excel file first',
         life: 3000
       });
       return;
@@ -568,9 +575,83 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Download import result CSV file
+   * Show download options dialog
    */
-  downloadImportResult(): void {
+  showDownloadOptionsDialog(): void {
+    const resultFile = this.importResultFile();
+    if (!resultFile) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'No Result File',
+        detail: 'No result file available for download',
+        life: 3000
+      });
+      return;
+    }
+
+    // Show the download choice dialog
+    this.showDownloadChoiceDialog = true;
+  }
+
+  /**
+   * Parse and filter CSV content by status
+   */
+  private parseAndFilterCsv(filterType: 'success' | 'errors' | 'both'): string {
+    const resultFile = this.importResultFile();
+    if (!resultFile) return '';
+
+    try {
+      const csv = atob(resultFile.content);
+      const lines = csv.split('\n');
+      const header = lines[0];
+      const headerCols = header.split(',');
+      
+      // Find the status and error message column indices
+      let statusIndex = -1;
+      let errorIndex = -1;
+      
+      headerCols.forEach((col, idx) => {
+        const trimmed = col.trim().toLowerCase();
+        if (trimmed.includes('status') || trimmed.includes('importstatus')) {
+          statusIndex = idx;
+        }
+        if (trimmed.includes('error')) {
+          errorIndex = idx;
+        }
+      });
+
+      const filteredLines = [header];
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const cols = line.split(',');
+        const status = statusIndex >= 0 ? cols[statusIndex]?.trim().toLowerCase() : '';
+
+        let isSuccess = status.includes('success');
+        let isError = status.includes('error') || status.includes('failed');
+
+        if (filterType === 'success' && isSuccess) {
+          filteredLines.push(line);
+        } else if (filterType === 'errors' && isError) {
+          filteredLines.push(line);
+        } else if (filterType === 'both') {
+          filteredLines.push(line);
+        }
+      }
+
+      return filteredLines.join('\n');
+    } catch (error) {
+      console.error('Error filtering CSV:', error);
+      return '';
+    }
+  }
+
+  /**
+   * Download filtered results
+   */
+  downloadFilteredResults(filterType: 'success' | 'errors' | 'both'): void {
     const resultFile = this.importResultFile();
     if (!resultFile) {
       this.messageService.add({
@@ -583,19 +664,32 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
     }
 
     try {
-      // Convert base64 string to Blob
-      const binaryString = atob(resultFile.content);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+      const filteredCsv = this.parseAndFilterCsv(filterType);
+      
+      if (!filteredCsv) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'No Data',
+          detail: `No ${filterType} records found to download`,
+          life: 3000
+        });
+        return;
       }
-      const blob = new Blob([bytes], { type: 'text/csv;charset=utf-8;' });
+
+      // Create blob from filtered CSV
+      const blob = new Blob([filteredCsv], { type: 'text/csv;charset=utf-8;' });
 
       // Create download link and trigger download
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', resultFile.fileName);
+      
+      // Generate meaningful filename
+      const timestamp = resultFile.fileName.match(/_\d{8}_\d{6}/)?.[0] || '';
+      const filterSuffix = filterType === 'both' ? '' : `_${filterType}`;
+      const fileName = `import_result${filterSuffix}${timestamp}.csv`;
+      
+      link.setAttribute('download', fileName);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -607,9 +701,12 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
       this.messageService.add({
         severity: 'success',
         summary: 'Download Started',
-        detail: `File ${resultFile.fileName} is downloading`,
+        detail: `File ${fileName} is downloading`,
         life: 3000
       });
+
+      // Hide the choice dialog
+      this.showDownloadChoiceDialog = false;
     } catch (error) {
       console.error('Error downloading file:', error);
       this.messageService.add({
@@ -618,7 +715,15 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
         detail: 'Failed to download the result file. Please try again.',
         life: 3000
       });
+      this.showDownloadChoiceDialog = false;
     }
+  }
+
+  /**
+   * Download import result CSV file
+   */
+  downloadImportResult(): void {
+    this.showDownloadOptionsDialog();
   }
 
   /**
