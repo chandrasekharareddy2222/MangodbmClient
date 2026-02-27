@@ -1,0 +1,138 @@
+<div class="check-table-details-container">
+    <!-- Header -->
+    <div class="header-section">
+        <h2>Check Table Details: {{ tableId() }}</h2>
+        <div class="header-actions">
+            <button pButton type="button" label="Import" icon="pi pi-upload" class="p-button-info" (click)="importData()"></button>
+            <button pButton type="button" label="New" icon="pi pi-plus" class="p-button-success" (click)="newRecord()"></button>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    @if (errorMessage(); as error) {
+        <p-message severity="error" [text]="error" styleClass="w-full mb-4"></p-message>
+    }
+
+    <!-- Loading Spinner -->
+    @if (isLoading()) {
+        <div class="loading-container">
+            <p-progressSpinner></p-progressSpinner>
+            <p>Loading table data...</p>
+        </div>
+    } @else {
+        <!-- Data Table -->
+        <p-card class="data-card">
+            <ng-template pTemplate="header">
+                <div class="card-header">
+                    <h3>{{ tableId() }} - {{ tableData().length }} Records</h3>
+                </div>
+            </ng-template>
+
+            @if (tableData().length > 0) {
+                <p-table 
+                    [value]="tableData()" 
+                    [paginator]="true" 
+                    [rows]="10"
+                    [showCurrentPageReport]="true"
+                    [rowsPerPageOptions]="[5, 10, 25, 50]"
+                    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+                    responsiveLayout="scroll"
+                    styleClass="p-datatable-sm"
+                    [tableStyle]="{ 'min-width': '50rem' }"
+                >
+                    <!-- Header Row -->
+                    <ng-template pTemplate="header">
+                        <tr>
+                            @for (col of columns(); track col.field) {
+                                <th pSortableColumn="{{ col.field }}" [style]="{'width':'150px', 'text-align': col.field === 'isActive' ? 'center' : 'left'}">
+                                    {{ col.header }}
+                                    <p-sortIcon field="{{ col.field }}"></p-sortIcon>
+                                </th>
+                            }
+                            <!-- Action Column Header -->
+                            <th [style]="{'width':'140px', 'text-align':'center'}"><span class="actions-header">ACTIONS</span></th>
+                        </tr>
+                    </ng-template>
+
+                    <!-- Data Rows -->
+                    <ng-template pTemplate="body" let-rowData>
+                        <tr>
+                            @for (col of columns(); track col.field) {
+                                <td [style]="{'width':'150px', 'text-align': col.field === 'isActive' ? 'center' : 'left'}">
+                                    @if (col.field === 'isActive') {
+                                        <label class="custom-toggle-switch">
+                                            <input type="checkbox" [(ngModel)]="rowData.isActive" (ngModelChange)="updateIsActive(rowData, $event)">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    } @else {
+                                        <span class="cell-content">
+                                            {{ getCellValue(rowData, col.field) }}
+                                        </span>
+                                    }
+                                </td>
+                            }
+                            <!-- Action Column -->
+                            <td [style]="{'width':'140px'}">
+                                <div class="action-buttons">
+                                    <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-text edit-btn" (click)="editRow(rowData)" pTooltip="Edit" tooltipPosition="top"></button>
+                                    <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-text delete-btn" (click)="deleteRow(rowData)" pTooltip="Delete" tooltipPosition="top"></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <!-- Empty Message -->
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td [attr.colspan]="columns().length + 1" class="no-data-message">
+                                No records found for {{ tableId() }}. <a href="javascript:void(0)" (click)="newRecord()">Create one</a>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            } @else {
+                <div class="no-data-message">
+                    <p>No data available for {{ tableId() }}</p>
+                </div>
+            }
+        </p-card>
+    }
+
+    <!-- New/Edit Dialog -->
+    <p-dialog header="{{ editDialogVisible() ? 'Edit Record' : 'New Record' }}" [visible]="formDialogVisible()" (onHide)="newDialogVisible.set(false); editDialogVisible.set(false)" modal="true" [closable]="false" [dismissableMask]="true" [style]="{width:'500px', maxWidth: '85vw'}">
+        <div class="p-fluid">
+            <div class="p-field">
+                <label for="tableName">Table Name</label>
+                <input id="tableName" pInputText [(ngModel)]="formRow().tableName" [disabled]="true" />
+            </div>
+            <div class="p-field">
+                <label for="keyValue">Key Value</label>
+                <input id="keyValue" pInputText [(ngModel)]="formRow().keyValue" />
+            </div>
+            <div class="p-field">
+                <label for="description">Description</label>
+                <textarea id="description" pTextarea rows="3" [(ngModel)]="formRow().description"></textarea>
+            </div>
+            <div class="p-field">
+                <label for="additionalInfo">Additional Info</label>
+                <textarea id="additionalInfo" pTextarea rows="4" [(ngModel)]="formRow().additionalInfo" placeholder="Enter additional information..."></textarea>
+            </div>
+            <!-- Active checkbox removed from Create/Edit forms as requested -->
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancel" icon="pi pi-times" class="p-button-text" (click)="newDialogVisible.set(false); editDialogVisible.set(false)"></button>
+            <button pButton label="Save" icon="pi pi-check" class="p-button-success" (click)="saveDialog()"></button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Delete Confirmation Dialog -->
+    <p-dialog header="Confirm" [visible]="deleteDialogVisible()" (onHide)="cancelDelete()" modal="true" [closable]="false" [dismissableMask]="true" [style]="{width:'350px'}">
+        <p>Are you sure you want to delete this record?</p>
+        <ng-template pTemplate="footer">
+            <button pButton label="No" icon="pi pi-times" class="p-button-text" (click)="cancelDelete()"></button>
+            <button pButton label="Yes" icon="pi pi-check" class="p-button-text" (click)="confirmDelete()"></button>
+        </ng-template>
+    </p-dialog>
+</div>
+
+<p-toast position="top-right"></p-toast>

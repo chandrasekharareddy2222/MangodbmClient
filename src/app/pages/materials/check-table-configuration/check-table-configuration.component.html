@@ -1,0 +1,86 @@
+<div class="check-table-configuration-container">
+    <p-toast></p-toast>
+    
+    <p-card class="mb-4">
+        <ng-template pTemplate="header">
+            <div class="page-header">
+                <h1>Check Table Configuration</h1>
+                <p class="subtitle" *ngIf="!selectedTable()">Select a check table from below to view configuration</p>
+                <p class="subtitle" *ngIf="selectedTable()">Configuration for: {{ getTableName(selectedTable()) }}</p>
+            </div>
+        </ng-template>
+
+        <!-- Selected Table Info -->
+        <div class="selected-table-info" *ngIf="selectedTable()">
+            <p class="info-message">
+                <strong>Check Table Configuration:</strong>
+            </p>
+            <div class="table-details">
+                <p><strong>Table Name:</strong> {{ getTableName(selectedTable()) }}</p>
+                <p *ngIf="selectedTable()?.description"><strong>Description:</strong> {{ selectedTable()?.description }}</p>
+                <p *ngIf="selectedTable()?.active"><strong>Status:</strong> Active</p>
+            </div>
+        </div>
+
+        <!-- Show dropdown only if no table is selected -->
+        <div class="form-group" *ngIf="!selectedTable()">
+            <label for="checkTableSelect" class="form-label">Search or Select Check Table</label>
+            <p-select
+                id="checkTableSelect"
+                [options]="checkTables()"
+                [(ngModel)]="selectedTable"
+                optionLabel="displayName"
+                placeholder="Choose a check table..."
+                [loading]="isLoadingTables()"
+                [filter]="true"
+                filterBy="displayName"
+                (onChange)="onTableSelected(selectedTable())"
+                [showClear]="true">
+                <ng-template let-option pTemplate="item">
+                    <div *ngIf="option">
+                        <span>{{ option.displayName }}</span>
+                    </div>
+                </ng-template>
+            </p-select>
+            <small class="form-text error" *ngIf="tablesError()">
+                {{ tablesError() }}
+            </small>
+        </div>
+    </p-card>
+
+    <!-- All Check Tables List -->
+    <p-card class="mb-4">
+        <ng-template pTemplate="header">
+            <div class="list-header">
+                <h2>Available Check Tables</h2>
+                <p class="subtitle">Total: {{ checkTables().length }} tables available</p>
+            </div>
+        </ng-template>
+
+        <!-- Debug info -->
+        <div style="margin-bottom: 1rem; padding: 1rem; background: #f0f0f0; border-radius: 4px; border: 2px solid #333;">
+            <p><strong>Debug Info:</strong></p>
+            <p>Tables loaded: <strong style="color: green;">{{ checkTables().length }}</strong></p>
+            <p>Is Loading: <strong>{{ isLoadingTables() }}</strong></p>
+            <p>Error: <strong>{{ tablesError() || 'None' }}</strong></p>
+        </div>
+
+        <!-- Tables Grid -->
+        <div class="tables-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+            <ng-container *ngFor="let table of checkTables(); trackBy: trackByTableId">
+                <div class="table-item" 
+                     style="padding: 1rem; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 6px; cursor: pointer; text-align: center;"
+                     (click)="selectTableFromList(table)">
+                    <div class="table-item-content">
+                        <span class="table-name" style="display: block; font-weight: 500; color: #333; font-size: 0.9rem; word-break: break-word;">{{ table.displayName }}</span>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+
+        <!-- Message if no tables -->
+        <div *ngIf="checkTables().length === 0" style="padding: 2rem; text-align: center; color: #666; background: #fef3c7; border-radius: 4px; border-left: 4px solid #f59e0b;">
+            <p><strong>No check tables available</strong></p>
+        </div>
+    </p-card>
+</div>
