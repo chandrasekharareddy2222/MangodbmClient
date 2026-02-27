@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map } from 'rxjs';
 import { FieldMetadata } from '../models/field-metadata.model';
@@ -13,6 +13,10 @@ import { environment } from '../../../environments/environment';
  * - Caches metadata using signals
  * - Provides reactive state for form generation
  * - Singleton service (providedIn: 'root')
+ * 
+ * Note: Check tables synchronization is handled by components that inject
+ * both MetadataService and CheckTableService (MaterialConfigurationComponent,
+ * DynamicMaterialFormComponent) to avoid circular dependencies
  */
 
 @Injectable({
@@ -31,7 +35,9 @@ export class MetadataService {
   readonly isLoading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+
+  constructor() {}
 
   /**
    * Fetch field metadata from API
@@ -101,6 +107,8 @@ export class MetadataService {
 
   /**
    * Import field metadata from CSV file
+   * Note: Component calling this method should also call CheckTableService.refresh()
+   * to sync the dropdown after successful import (see MaterialConfigurationComponent)
    * @param file CSV file to import
    * @returns Observable with import results including downloadable result file
    */
@@ -125,8 +133,12 @@ export class MetadataService {
     }>>(`${environment.apiUrl}/field-metadata/import`, formData).pipe(
       tap({
         next: () => {
-          // Refresh metadata cache after successful import
+          // After successful import, refresh metadata cache
           this.getFieldMetadata().subscribe();
+          console.log('✅ CSV Import successful - metadata cache refreshed');
+        },
+        error: (error) => {
+          console.error('❌ CSV Import failed:', error);
         }
       })
     );

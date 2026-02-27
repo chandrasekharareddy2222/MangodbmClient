@@ -91,7 +91,7 @@ export class AppMenu implements OnInit {
                 icon: 'pi pi-fw pi-box',
                 items: [
                     {
-                        label: 'Check Table Configuration',
+                        label: 'Check Tables',
                         icon: 'pi pi-check-square',
                         items: checkTableItems
                     },
