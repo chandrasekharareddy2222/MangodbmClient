@@ -21,6 +21,7 @@ import { LoggerService } from './logger.service';
 export class CheckTableService {
   private readonly API_BASE = environment.apiUrl;
   private readonly CHECK_TABLES_ENDPOINT = '/field-metadata/active-checktables';
+  private readonly CHECK_TABLE_DATA_ENDPOINT = '/check-table-value';
 
   // Signal-based state
   private checkTablesSignal = signal<CheckTable[]>([]);
@@ -145,7 +146,7 @@ export class CheckTableService {
    * @returns Observable<CheckTableDataRow[]>
    */
   loadCheckTableData(tableName: string): Observable<CheckTableDataRow[]> {
-    const apiUrl = (environment as any).checkTableApiUrl || 'https://localhost:5001/api/CheckTableValue';
+    const apiUrl = this.API_BASE + this.CHECK_TABLE_DATA_ENDPOINT;
     const url = `${apiUrl}?tableName=${encodeURIComponent(tableName)}`;
 
     console.log(`Loading check table data from API: ${url}`);
