@@ -69,7 +69,11 @@ export class CheckTableDetailsComponent implements OnInit {
     selectedRow = signal<CheckTableDataRow | null>(null);
 
     // Fields to exclude from display (keep id for internal operations but hide from UI)
-    private excludeFields = ['id', 'validFrom', 'validTo', 'createdDate', 'createdBy'];
+    private excludeFields = ['id', 'checkTableId', 'validFrom', 'validTo', 'createdDate', 'createdBy'];
+
+    private getRecordId(row: CheckTableDataRow | null): string | number | null {
+        return row?.checkTableId ?? row?.id ?? null;
+    }
 
     // Computed values for dynamic columns (excluding timestamp fields)
     columns = computed(() => {
@@ -425,8 +429,9 @@ export class CheckTableDetailsComponent implements OnInit {
     editRow(row: CheckTableDataRow) {
         console.log('=== EDIT ROW DEBUG ===');
         console.log('Row being edited:', row);
+        console.log('Row checkTableId:', row.checkTableId);
         console.log('Row ID:', row.id);
-        console.log('Row has ID:', !!row.id);
+        console.log('Row has ID:', !!this.getRecordId(row));
         console.log('Row keys:', Object.keys(row));
         
         // Convert additionalInfo to clean string without braces and quotes
@@ -536,18 +541,19 @@ export class CheckTableDetailsComponent implements OnInit {
             const selectedRowData = this.selectedRow();
             console.log('=== UPDATE OPERATION DEBUG ===');
             console.log('Selected row data:', selectedRowData);
+            console.log('Selected row checkTableId:', selectedRowData?.checkTableId);
             console.log('Selected row ID:', selectedRowData?.id);
             console.log('Edit dialog visible:', this.editDialogVisible());
             
-            // TEMPORARY TEST: Force API call with hardcoded ID to test
-            const testId = selectedRowData?.id || 81; // Use 81 as fallback for testing
-            console.log('Using ID for API call:', testId);
+            // Use checkTableId from API response (fallback to id for compatibility)
+            const recordId = this.getRecordId(selectedRowData);
+            console.log('Using ID for API call:', recordId);
             
-            if (testId) {
+            if (recordId) {
                 console.log('✅ ID exists, making update API call');
-                console.log('API URL will be:', `https://localhost:5001/api/v1/check-table-value/${testId}`);
+                console.log('API URL will be:', `https://localhost:5001/api/v1/check-table-value/${recordId}`);
                 
-                this.checkTableService.updateCheckTableValue(testId, updatedRow).subscribe({
+                this.checkTableService.updateCheckTableValue(recordId, updatedRow).subscribe({
                     next: (response) => {
                         console.log('✅ Update API call successful:', response);
                         this.messageService.add({
@@ -662,8 +668,9 @@ export class CheckTableDetailsComponent implements OnInit {
      * Update isActive field when toggle is changed
      */
     updateIsActive(row: CheckTableDataRow, value: boolean) {
-        if (row.id) {
-            this.checkTableService.updateCheckTableValueStatus(row.id, value).subscribe({
+        const recordId = this.getRecordId(row);
+        if (recordId) {
+            this.checkTableService.updateCheckTableValueStatus(recordId, value).subscribe({
                 next: (response) => {
                     this.messageService.add({
                         severity: 'success',
@@ -691,16 +698,17 @@ export class CheckTableDetailsComponent implements OnInit {
         const selectedRow = this.selectedRow();
         console.log('=== DELETE OPERATION DEBUG ===');
         console.log('Selected row for delete:', selectedRow);
+        console.log('Selected row checkTableId:', selectedRow?.checkTableId);
         console.log('Selected row ID:', selectedRow?.id);
         
-        // TEMPORARY TEST: Force API call with hardcoded ID to test
-        const testId = selectedRow?.id || 81; // Use 81 as fallback for testing
-        console.log('Using ID for delete API call:', testId);
-        console.log('API URL will be:', `https://localhost:5001/api/v1/check-table-value/${testId}`);
+        // Use checkTableId from API response (fallback to id for compatibility)
+        const recordId = this.getRecordId(selectedRow);
+        console.log('Using ID for delete API call:', recordId);
+        console.log('API URL will be:', `https://localhost:5001/api/v1/check-table-value/${recordId}`);
         
-        if (testId) {
+        if (recordId) {
             console.log('✅ ID exists, making delete API call');
-            this.checkTableService.deleteCheckTableValue(testId).subscribe({
+            this.checkTableService.deleteCheckTableValue(recordId).subscribe({
                 next: () => {
                     console.log('✅ Delete API call successful');
                     this.messageService.add({

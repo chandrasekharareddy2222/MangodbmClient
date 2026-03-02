@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { tap } from 'rxjs/operators';
 import { CardModule } from 'primeng/card';
 import { PanelModule } from 'primeng/panel';
 import { environment } from '../../../../environments/environment';
@@ -53,7 +54,8 @@ import { ApiResponse } from '../../../core/models/api-response.model';
   ],
   templateUrl: './dynamic-material-form.component.html',
   styleUrl: './dynamic-material-form.component.scss',
-  providers: [MessageService]
+  providers: [MessageService],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DynamicMaterialFormComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -61,6 +63,7 @@ export class DynamicMaterialFormComponent implements OnInit {
   private metadataService = inject(MetadataService);
   private checkTableService = inject(CheckTableService);
   private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
 
   // Signals for reactive state
   fields = signal<FieldMetadata[]>([]);
@@ -74,6 +77,9 @@ export class DynamicMaterialFormComponent implements OnInit {
 
   // Material number field (always required)
   materialNumberField: FieldMetadata | null = null;
+
+  // Track if initialization has started to prevent multiple calls
+  private initializationStarted = false;
 
   // All other fields (excluding material number)
   formFields = computed(() => {
@@ -92,6 +98,14 @@ export class DynamicMaterialFormComponent implements OnInit {
   readonly UIControlType = UIControlType;
 
   ngOnInit(): void {
+    // Only initialize once
+    if (this.initializationStarted) {
+      return;
+    }
+    this.initializationStarted = true;
+    
+    // Initialize empty form group first
+    this.materialForm = this.fb.group({});
     this.loadMetadata();
   }
 
@@ -99,6 +113,11 @@ export class DynamicMaterialFormComponent implements OnInit {
    * Load field metadata and build form
    */
   loadMetadata(): void {
+    // Prevent recursive calls
+    if (this.isLoading() || this.fields().length > 0) {
+      return;
+    }
+    
     this.isLoading.set(true);
     this.error.set(null);
 
@@ -110,8 +129,39 @@ export class DynamicMaterialFormComponent implements OnInit {
         this.materialNumberField = metadata.find(f => f.fieldName === 'MATNR') || null;
         
         this.buildForm(metadata);
-        this.generateMaterialNumber();
-        this.isLoading.set(false);
+        
+        // Generate material number - form will show once this is done
+        this.generateMaterialNumber().subscribe({
+          next: () => {
+            this.isLoading.set(false);
+            console.log('✅ Form loaded: metadata + material number ready');
+            
+            // Load check tables in background after form is ready
+            this.checkTableService.fetchCheckTables().subscribe({
+              next: () => {
+                console.log('✅ Check tables loaded in background');
+              },
+              error: (err: any) => {
+                console.warn('⚠️ Check tables failed to load:', err);
+              }
+            });
+          },
+          error: (err: any) => {
+            // Show form even if material number generation fails
+            this.isLoading.set(false);
+            console.warn('⚠️ Material number failed, loading check tables anyway:', err);
+            
+            // Still try to load check tables
+            this.checkTableService.fetchCheckTables().subscribe({
+              next: () => {
+                console.log('✅ Check tables loaded in background');
+              },
+              error: (err: any) => {
+                console.warn('⚠️ Check tables failed to load:', err);
+              }
+            });
+          }
+        });
       },
       error: (err) => {
         this.error.set(err.message || 'Failed to load form metadata');
@@ -159,20 +209,18 @@ export class DynamicMaterialFormComponent implements OnInit {
 
   /**
    * Generate material number from API and populate the MATNR field
+   * Returns an Observable for better control flow
    */
-  private generateMaterialNumber(): void {
-    this.http.get<ApiResponse<string>>(`${environment.apiUrl}/materials/generate-matnr`).subscribe({
-      next: (response) => {
+  private generateMaterialNumber() {
+    return this.http.get<ApiResponse<string>>(`${environment.apiUrl}/materials/generate-matnr`).pipe(
+      tap((response) => {
         if (response.success && response.data) {
           this.materialForm.patchValue({
             MATNR: response.data
           });
         }
-      },
-      error: (err) => {
-        // Don't block form usage if generation fails
-      }
-    });
+      })
+    );
   }
 
   /**
@@ -300,15 +348,22 @@ export class DynamicMaterialFormComponent implements OnInit {
         
         // Reset form and generate new material number
         this.materialForm.reset();
-        this.generateMaterialNumber();
-        
-        // Refresh check tables dropdown to keep synchronized
-        this.checkTableService.refresh().subscribe({
+        this.generateMaterialNumber().subscribe({
           next: () => {
-            console.log('✅ Check tables refreshed successfully after material submission');
+            console.log('✅ New material number generated');
+            
+            // Refresh check tables in background
+            this.checkTableService.refresh().subscribe({
+              next: () => {
+                console.log('✅ Check tables refreshed');
+              },
+              error: (err: any) => {
+                console.warn('⚠️ Check tables refresh failed:', err);
+              }
+            });
           },
-          error: (error: any) => {
-            console.error('❌ Failed to refresh check tables:', error);
+          error: (err: any) => {
+            console.error('❌ Failed to generate new material number:', err);
           }
         });
         

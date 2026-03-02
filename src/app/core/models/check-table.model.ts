@@ -31,6 +31,7 @@ export interface CheckTableResponse {
  * Only includes fields provided by the API
  */
 export interface CheckTableDataRow {
+  checkTableId?: string | number;
   id?: string | number;  // Added for update/delete operations
   tableName: string;
   keyValue: string;

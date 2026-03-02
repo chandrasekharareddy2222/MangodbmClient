@@ -364,7 +364,8 @@ export class CheckTableService {
 
 
           const row: CheckTableDataRow = {
-            id: item.id || item.checkTableID || item.CheckTableID, // Map various possible ID field names
+            checkTableId: item.checkTableId ?? item.checkTableID ?? item.CheckTableID ?? item.id,
+            id: item.id ?? item.checkTableId ?? item.checkTableID ?? item.CheckTableID, // Backward-compatible alias
             tableName: item.tableName ?? tableName,
             keyValue: item.keyValue,
             description: item.description,
@@ -379,8 +380,10 @@ export class CheckTableService {
           // Debug: Log ID mapping
           console.log(`Mapping ID for record ${item.keyValue}:`, {
             backendId: item.id,
+            checkTableId: item.checkTableId,
             checkTableID: item.checkTableID,
             CheckTableID: item.CheckTableID,
+            finalCheckTableId: row.checkTableId,
             finalId: row.id
           });
 
