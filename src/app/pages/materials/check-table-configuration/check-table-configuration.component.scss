@@ -37,6 +37,26 @@
             ::ng-deep {
                 .p-select {
                     width: 100%;
+                    
+                    // Ensure chevron icon is always visible
+                    .p-select-dropdown-trigger {
+                        display: flex !important;
+                        align-items: center;
+                        justify-content: center;
+                        min-width: 2rem;
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                    }
+                    
+                    // Ensure dropdown trigger is visible even when empty
+                    &:not(.p-select-disabled) .p-select-dropdown-trigger {
+                        cursor: pointer;
+                    }
+                    
+                    // Show loading state properly
+                    &.p-select-loading .p-select-dropdown-trigger {
+                        opacity: 0.5;
+                    }
                 }
             }
         }

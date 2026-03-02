@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, computed, effect, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
@@ -28,6 +28,9 @@ export class CheckTableConfigurationComponent implements OnInit {
     isLoadingTables = this.checkTableService.isLoading;
     tablesError = this.checkTableService.error;
 
+    // Initialize with empty array to ensure dropdown renders immediately
+    dropdownOptions = signal<CheckTable[]>([]);
+
     constructor() {
         // Debug: Log signals when they change
         console.log('📌 Component initialized');
@@ -38,13 +41,58 @@ export class CheckTableConfigurationComponent implements OnInit {
         // Log current state
         console.log('🚀 ngOnInit - Tables count:', this.checkTables().length);
         
+        // Initialize dropdown with empty options to ensure chevron is visible
+        this.dropdownOptions.set([]);
+        
+        // Test API connectivity first
+        this.testApiConnection();
+        
         // Load all check tables from API
         this.loadCheckTables();
+        
+        // Use effect to update dropdown when check tables change
+        effect(() => {
+            const tables = this.checkTables();
+            this.dropdownOptions.set(tables);
+        });
         
         // Check if a specific table ID is in the route
         this.activatedRoute.params.subscribe(params => {
             if (params['id']) {
                 this.loadTableById(params['id']);
+            }
+        });
+    }
+
+    /**
+     * Test API connectivity
+     */
+    testApiConnection(): void {
+        this.checkTableService.testApiConnectivity().subscribe({
+            next: (isConnected) => {
+                if (isConnected) {
+                    console.log('✅ API connectivity test passed');
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Connected',
+                        detail: 'API connection established'
+                    });
+                } else {
+                    console.warn('❌ API connectivity test failed');
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'Connection Issue',
+                        detail: 'Unable to connect to API. Please check your network.'
+                    });
+                }
+            },
+            error: (error) => {
+                console.error('API connectivity test error:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Connection Error',
+                    detail: 'Failed to test API connectivity'
+                });
             }
         });
     }
@@ -62,6 +110,7 @@ export class CheckTableConfigurationComponent implements OnInit {
                 });
             },
             error: (error: any) => {
+                console.error('Failed to load check tables:', error);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
