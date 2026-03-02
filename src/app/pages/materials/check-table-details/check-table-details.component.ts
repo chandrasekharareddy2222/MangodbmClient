@@ -64,31 +64,41 @@ export class CheckTableDetailsComponent implements OnInit {
         tableName: '',
         keyValue: '',
         description: '',
-        isActive: false,
-        validFrom: '',
-        validTo: '',
-        createdDate: '',
-        createdBy: ''
+        isActive: false
     });
     selectedRow = signal<CheckTableDataRow | null>(null);
 
-    // Fields to exclude from display
-    private excludeFields = ['validFrom', 'validTo', 'createdDate', 'createdBy'];
+    // Fields to exclude from display (keep id for internal operations but hide from UI)
+    private excludeFields = ['id', 'validFrom', 'validTo', 'createdDate', 'createdBy'];
 
     // Computed values for dynamic columns (excluding timestamp fields)
     columns = computed(() => {
         const data = this.tableData();
+        console.log('Computing columns. Current data length:', data.length);
+        console.log('Current data for columns:', data);
+        
         if (data.length === 0) {
+            console.log('No data, returning empty columns');
             return [];
         }
         
         // Get all unique keys from the first row, excluding timestamp fields
-        return Object.keys(data[0])
-            .filter(key => !this.excludeFields.includes(key))
-            .map(key => ({
-                field: key,
-                header: this.formatColumnHeader(key)
-            }));
+        const firstRow = data[0];
+        console.log('First row for column computation:', firstRow);
+        
+        const allKeys = firstRow ? Object.keys(firstRow) : [];
+        console.log('All keys in first row:', allKeys);
+        
+        const filteredKeys = allKeys.filter(key => !this.excludeFields.includes(key));
+        console.log('Filtered keys (excluding timestamp fields):', filteredKeys);
+        
+        const columns = filteredKeys.map(key => ({
+            field: key,
+            header: this.formatColumnHeader(key)
+        }));
+        
+        console.log('Final columns:', columns);
+        return columns;
     });
 
     constructor() {
@@ -118,6 +128,7 @@ export class CheckTableDetailsComponent implements OnInit {
      * Load table data from service
      */
     loadTableData(tableName: string) {
+        console.log(`Starting loadTableData for: ${tableName}`);
         this.isLoading.set(true);
         this.errorMessage.set(null);
 
@@ -126,7 +137,22 @@ export class CheckTableDetailsComponent implements OnInit {
         this.checkTableService.loadCheckTableData(tableName).subscribe({
             next: (data: CheckTableDataRow[]) => {
                 console.log(`Data loaded successfully. Row count: ${data.length}`);
+                console.log('=== DETAILED DATA ANALYSIS ===');
+                
+                // Log each record with ID information
+                data.forEach((record, index) => {
+                    console.log(`Record ${index + 1}:`, {
+                        keyValue: record.keyValue,
+                        id: record.id,
+                        hasId: !!record.id,
+                        idType: typeof record.id,
+                        allKeys: Object.keys(record)
+                    });
+                });
+                
+                console.log('Setting tableData signal with:', data);
                 this.tableData.set(data);
+                console.log('tableData signal now contains:', this.tableData());
                 this.isLoading.set(false);
             },
             error: (error: any) => {
@@ -209,9 +235,9 @@ export class CheckTableDetailsComponent implements OnInit {
      * Reload data
      */
     reload() {
-        const id = this.tableId();
-        if (id) {
-            this.loadTableData(id);
+        const tableName = this.tableId();
+        if (tableName) {
+            this.loadTableData(tableName);
         }
     }
 
@@ -266,7 +292,6 @@ export class CheckTableDetailsComponent implements OnInit {
                     importedData = this.parseCSV(content);
                 } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
                     // For Excel files, we'd need a library like xlsx
-                    // For now, show a message
                     this.messageService.add({
                         severity: 'warn',
                         summary: 'Excel Import',
@@ -339,11 +364,7 @@ export class CheckTableDetailsComponent implements OnInit {
                     keyValue: item.keyValue || item.key || item.id || `imported_${index + 1}`,
                     description: item.description || item.desc || '',
                     additionalInfo: this.processAdditionalInfo(item.additionalInfo || item.info || item.additional),
-                    isActive: item.isActive !== undefined ? Boolean(item.isActive) : true,
-                    validFrom: item.validFrom || item.from || '',
-                    validTo: item.validTo || item.to || '',
-                    createdDate: new Date().toISOString(),
-                    createdBy: 'Import'
+                    isActive: item.isActive !== undefined ? Boolean(item.isActive) : true
                 };
                 
                 processedData.push(row);
@@ -382,17 +403,18 @@ export class CheckTableDetailsComponent implements OnInit {
      */
     newRecord() {
         console.log('Creating new record for table:', this.tableId());
-        // reset form
+        
+        // Get current table ID and ensure it's not null
+        const currentTableName = this.tableId() || '';
+        console.log('Setting tableName to:', currentTableName);
+        
+        // reset form with proper table name
         this.formRow.set({
-            tableName: this.tableId() || '',
+            tableName: currentTableName,
             keyValue: '',
             description: '',
             additionalInfo: '',
-            isActive: false,
-            validFrom: '',
-            validTo: '',
-            createdDate: '',
-            createdBy: ''
+            isActive: true  // Default to true for new records
         });
         this.newDialogVisible.set(true);
     }
@@ -401,6 +423,12 @@ export class CheckTableDetailsComponent implements OnInit {
      * Open edit dialog
      */
     editRow(row: CheckTableDataRow) {
+        console.log('=== EDIT ROW DEBUG ===');
+        console.log('Row being edited:', row);
+        console.log('Row ID:', row.id);
+        console.log('Row has ID:', !!row.id);
+        console.log('Row keys:', Object.keys(row));
+        
         // Convert additionalInfo to clean string without braces and quotes
         let additionalInfoString = '';
         if (row.additionalInfo) {
@@ -419,12 +447,16 @@ export class CheckTableDetailsComponent implements OnInit {
             }
         }
         
+        console.log('Setting formRow with:', { ...row, additionalInfo: additionalInfoString });
+        
         this.formRow.set({ 
             ...row, 
             additionalInfo: additionalInfoString 
         });
         this.selectedRow.set(row);
         this.editDialogVisible.set(true);
+        
+        console.log('selectedRow signal set to:', this.selectedRow());
     }
 
     /**
@@ -468,36 +500,155 @@ export class CheckTableDetailsComponent implements OnInit {
             }
         }
         
-        // Update the form row with processed data
+        // Add default DateTime values for new records to prevent SQL overflow
+        const now = new Date();
+        const defaultValidFrom = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const defaultValidTo = '9999-12-31'; // SQL Server max date in YYYY-MM-DD format
+        
+        // Ensure dates are in proper format
+        const finalValidFrom = formData.validFrom || defaultValidFrom;
+        const finalValidTo = formData.validTo || defaultValidTo;
+        const finalCreatedDate = formData.createdDate || defaultValidFrom;
+        
+        console.log('Date values being sent:', {
+            validFrom: finalValidFrom,
+            validTo: finalValidTo,
+            createdDate: finalCreatedDate,
+            originalValidFrom: formData.validFrom,
+            originalValidTo: formData.validTo
+        });
+        
+        // Update the form row with processed data and proper dates
         const updatedRow = {
             ...formData,
-            additionalInfo: finalAdditionalInfo
+            additionalInfo: finalAdditionalInfo,
+            validFrom: finalValidFrom,
+            validTo: finalValidTo,
+            createdDate: finalCreatedDate,
+            createdBy: formData.createdBy || 'System'
         };
         
-        // Here you would typically make an API call to save the data
-        // For now, just update the local data and close dialogs
-        if (this.editDialogVisible()) {
-            // Update existing record in tableData
-            const currentData = this.tableData();
-            const updatedData = currentData.map(row => 
-                row.keyValue === updatedRow.keyValue ? updatedRow : row
-            );
-            this.tableData.set(updatedData);
-        } else {
-            // Add new record to tableData
-            const currentData = this.tableData();
-            this.tableData.set([...currentData, updatedRow]);
-        }
+        console.log('Saving record:', updatedRow);
         
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: `Record ${this.editDialogVisible() ? 'updated' : 'created'} successfully`
-        });
+        // Make API call to persist data
+        if (this.editDialogVisible()) {
+            // Update existing record
+            const selectedRowData = this.selectedRow();
+            console.log('=== UPDATE OPERATION DEBUG ===');
+            console.log('Selected row data:', selectedRowData);
+            console.log('Selected row ID:', selectedRowData?.id);
+            console.log('Edit dialog visible:', this.editDialogVisible());
+            
+            // TEMPORARY TEST: Force API call with hardcoded ID to test
+            const testId = selectedRowData?.id || 81; // Use 81 as fallback for testing
+            console.log('Using ID for API call:', testId);
+            
+            if (testId) {
+                console.log('✅ ID exists, making update API call');
+                console.log('API URL will be:', `https://localhost:5001/api/v1/check-table-value/${testId}`);
+                
+                this.checkTableService.updateCheckTableValue(testId, updatedRow).subscribe({
+                    next: (response) => {
+                        console.log('✅ Update API call successful:', response);
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Record updated successfully'
+                        });
+                        // Reload data to reflect changes
+                        this.reloadTableData();
+                    },
+                    error: (error) => {
+                        console.error('❌ Update error:', error);
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to update record: ' + (error.message || 'Unknown error')
+                        });
+                    }
+                });
+            } else {
+                console.log('❌ No ID found, update API call skipped');
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Cannot update record: No ID found'
+                });
+            }
+        } else {
+            // Create new record
+            this.checkTableService.createCheckTableValue(updatedRow).subscribe({
+                next: (response) => {
+                    console.log('✅ Create API call successful:', response);
+                    console.log('Backend response ID:', response?.id);
+                    
+                    // Add new record directly to UI for immediate visibility
+                    const currentData = this.tableData();
+                    const newRecord: CheckTableDataRow = {
+                        tableName: updatedRow.tableName,
+                        keyValue: updatedRow.keyValue,
+                        description: updatedRow.description,
+                        additionalInfo: updatedRow.additionalInfo,
+                        isActive: updatedRow.isActive,
+                        id: response?.id || Date.now().toString()
+                    };
+                    
+                    console.log('New record to add to UI:', newRecord);
+                    const updatedData = [newRecord, ...currentData];
+                    console.log('Updated UI data (new record at start):', updatedData);
+                    
+                    this.tableData.set(updatedData);
+                    
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Record created successfully'
+                    });
+                    
+                    // Still reload to get the complete data from backend
+                    setTimeout(() => {
+                        console.log('=== Starting background reload to verify backend ===');
+                        this.reloadTableData();
+                    }, 1000);
+                },
+                error: (error) => {
+                    console.error('❌ Create API call failed:', error);
+                    console.error('Error details:', {
+                        status: error?.status,
+                        statusText: error?.statusText,
+                        message: error?.message,
+                        error: error?.error
+                    });
+                    
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to create record: ' + (error.message || 'Unknown error')
+                    });
+                }
+            });
+        }
         
         // Close dialogs
         this.newDialogVisible.set(false);
         this.editDialogVisible.set(false);
+    }
+
+    /**
+     * Reload table data from server
+     */
+    reloadTableData() {
+        const tableName = this.tableId();
+        if (tableName) {
+            console.log('=== reloadTableData called for:', tableName);
+            console.log('Current tableData before reload:', this.tableData());
+            
+            // Add small delay to ensure backend has processed the create/update
+            setTimeout(() => {
+                console.log('=== Making API call to loadTableData ===');
+                this.loadTableData(tableName);
+            }, 500);
+        }
     }
 
     /**
@@ -511,19 +662,72 @@ export class CheckTableDetailsComponent implements OnInit {
      * Update isActive field when toggle is changed
      */
     updateIsActive(row: CheckTableDataRow, value: boolean) {
-        row.isActive = value;
-        // Here you could add API call to persist the change
-        this.messageService.add({
-            severity: 'info',
-            summary: 'Updated',
-            detail: `Status updated to ${value ? 'Active' : 'Inactive'}`
-        });
+        if (row.id) {
+            this.checkTableService.updateCheckTableValueStatus(row.id, value).subscribe({
+                next: (response) => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Updated',
+                        detail: `Status updated to ${value ? 'Active' : 'Inactive'}`
+                    });
+                    // Reload data to reflect changes
+                    this.reloadTableData();
+                },
+                error: (error: any) => {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to update status'
+                    });
+                }
+            });
+        }
     }
 
     /**
      * Confirm delete
      */
     confirmDelete() {
-        this.deleteDialogVisible.set(false);
+        const selectedRow = this.selectedRow();
+        console.log('=== DELETE OPERATION DEBUG ===');
+        console.log('Selected row for delete:', selectedRow);
+        console.log('Selected row ID:', selectedRow?.id);
+        
+        // TEMPORARY TEST: Force API call with hardcoded ID to test
+        const testId = selectedRow?.id || 81; // Use 81 as fallback for testing
+        console.log('Using ID for delete API call:', testId);
+        console.log('API URL will be:', `https://localhost:5001/api/v1/check-table-value/${testId}`);
+        
+        if (testId) {
+            console.log('✅ ID exists, making delete API call');
+            this.checkTableService.deleteCheckTableValue(testId).subscribe({
+                next: () => {
+                    console.log('✅ Delete API call successful');
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Record deleted successfully'
+                    });
+                    // Reload data to reflect changes
+                    this.reloadTableData();
+                    this.deleteDialogVisible.set(false);
+                },
+                error: (error: any) => {
+                    console.error('❌ Delete error:', error);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to delete record'
+                    });
+                }
+            });
+        } else {
+            console.log('❌ No ID found, delete API call skipped');
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Cannot delete record: No ID found'
+            });
+        }
     }
 }

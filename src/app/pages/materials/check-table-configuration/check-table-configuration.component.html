@@ -27,7 +27,7 @@
             <label for="checkTableSelect" class="form-label">Search or Select Check Table</label>
             <p-select
                 id="checkTableSelect"
-                [options]="checkTables()"
+                [options]="dropdownOptions()"
                 [(ngModel)]="selectedTable"
                 optionLabel="displayName"
                 placeholder="Choose a check table..."
@@ -35,7 +35,8 @@
                 [filter]="true"
                 filterBy="displayName"
                 (onChange)="onTableSelected(selectedTable())"
-                [showClear]="true">
+                [showClear]="true"
+                emptyFilterMessage="No check tables found">
                 <ng-template let-option pTemplate="item">
                     <div *ngIf="option">
                         <span>{{ option.displayName }}</span>

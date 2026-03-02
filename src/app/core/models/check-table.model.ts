@@ -31,15 +31,16 @@ export interface CheckTableResponse {
  * Only includes fields provided by the API
  */
 export interface CheckTableDataRow {
+  id?: string | number;  // Added for update/delete operations
   tableName: string;
   keyValue: string;
   description: string;
   additionalInfo?: any;
   isActive: boolean;
-  validFrom: string;
-  validTo: string;
-  createdDate: string;
-  createdBy: string;
+  validFrom?: string;
+  validTo?: string;
+  createdDate?: string;
+  createdBy?: string;
   [key: string]: any; // Allow dynamic property access for components
 }
 
