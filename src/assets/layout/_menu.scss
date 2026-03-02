@@ -73,11 +73,20 @@
 
             .layout-menuitem-icon {
                 margin-right: 0.5rem;
+                flex-shrink: 0;
+            }
+
+            .layout-menuitem-text {
+                white-space: nowrap;
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             .layout-submenu-toggler {
                 font-size: 75%;
                 margin-left: auto;
+                flex-shrink: 0;
                 transition: transform var(--element-transition-duration);
             }
 

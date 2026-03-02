@@ -182,7 +182,14 @@ export class CheckTableService {
 
 
   /**
+   * Refresh check tables - alias for fetchCheckTables() for convenience
+   * Triggers a re-fetch of the check tables from the API
+   */
+  refresh(): Observable<CheckTable[]> {
+    return this.fetchCheckTables();
+  }
 
+  /**
    * Parse table data from API response
 
    * Handles both string arrays and object arrays

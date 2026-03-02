@@ -17,6 +17,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 import { MetadataService } from '../../../core/services/metadata.service';
+import { CheckTableService } from '../../../core/services/check-table.service';
 import { FieldMetadata, FieldOption, MaterialSubmission, DataType, UIControlType } from '../../../core/models/field-metadata.model';
 import { DynamicValidators } from '../../../shared/validators/dynamic-validators';
 import { ApiResponse } from '../../../core/models/api-response.model';
@@ -58,6 +59,7 @@ export class DynamicMaterialFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private metadataService = inject(MetadataService);
+  private checkTableService = inject(CheckTableService);
   private messageService = inject(MessageService);
 
   // Signals for reactive state
@@ -299,6 +301,16 @@ export class DynamicMaterialFormComponent implements OnInit {
         // Reset form and generate new material number
         this.materialForm.reset();
         this.generateMaterialNumber();
+        
+        // Refresh check tables dropdown to keep synchronized
+        this.checkTableService.refresh().subscribe({
+          next: () => {
+            console.log('✅ Check tables refreshed successfully after material submission');
+          },
+          error: (error: any) => {
+            console.error('❌ Failed to refresh check tables:', error);
+          }
+        });
         
         // Hide success message after 5 seconds
         setTimeout(() => this.submitSuccess.set(false), 5000);
