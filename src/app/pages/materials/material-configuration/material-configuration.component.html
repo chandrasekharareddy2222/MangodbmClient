@@ -56,53 +56,14 @@
           </div>
         </div>
         
-        <!-- CSV Import Section -->
-        <div class="csv-import-section">
-          <div class="csv-import-header">
-            <i class="pi pi-upload"></i>
-            <span>Import Field Metadata from CSV or Excel</span>
-          </div>
-          <div class="csv-import-controls">
-            <div class="file-input-wrapper">
-              <input 
-                type="file" 
-                #csvFileInput
-                accept=".csv,.xlsx,.xls"
-                (change)="onCsvFileSelected($event)"
-                class="csv-file-input"
-                [disabled]="isImporting()"
-              />
-              <p-button 
-                icon="pi pi-folder-open"
-                [disabled]="isImporting()"
-                (onClick)="csvFileInput.click()"
-                [pTooltip]="'Select a CSV or Excel file to import'"
-                tooltipPosition="bottom"
-                text
-                severity="secondary"
-              ></p-button>
-            </div>
-            <span class="selected-file" *ngIf="selectedCsvFile()">
-              {{ selectedCsvFile()?.name }}
-            </span>
-            <p-button 
-              label="Submit"
-              icon="pi pi-check"
-              [loading]="isImporting()"
-              [disabled]="!selectedCsvFile() || isImporting()"
-              (onClick)="submitCsvImport()"
-              severity="success"
-            ></p-button>
-            <p-button 
-              label="Refresh"
-              icon="pi pi-refresh"
-              [disabled]="!selectedCsvFile() || isImporting()"
-              (onClick)="refreshCsvImport()"
-              severity="secondary"
-              text
-            ></p-button>
-          </div>
-        </div>
+        <app-file-import-panel
+          title="Import Field Metadata from CSV or Excel"
+          accept=".csv,.xlsx,.xls"
+          [isLoading]="isImporting()"
+          [selectTooltip]="'Select a CSV or Excel file to import'"
+          (submitFile)="onMetadataFileSubmit($event)"
+          (refresh)="refreshCsvImport()"
+        ></app-file-import-panel>
 
         <!-- Import Results Summary -->
         <div *ngIf="importResult()" class="import-results">

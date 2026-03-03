@@ -16,6 +16,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { MessageService } from 'primeng/api';
 import { CheckTableService } from '../../../core/services/check-table.service';
 import { CheckTableDataRow } from '../../../core/models/check-table.model';
+import { FileImportPanelComponent } from '../../../shared/components/file-import-panel/file-import-panel.component';
 
 @Component({
     selector: 'app-check-table-details',
@@ -34,7 +35,8 @@ import { CheckTableDataRow } from '../../../core/models/check-table.model';
         DialogModule,
         InputTextModule,
         TextareaModule,
-        CheckboxModule
+        CheckboxModule,
+        FileImportPanelComponent
     ],
     providers: [MessageService],
     templateUrl: './check-table-details.component.html',
@@ -49,6 +51,8 @@ export class CheckTableDetailsComponent implements OnInit {
     tableId = signal<string | null>(null);
     tableData = signal<CheckTableDataRow[]>([]);
     isLoading = signal<boolean>(false);
+    isImporting = signal<boolean>(false);
+    importResetToken = signal<number>(0);
     errorMessage = signal<string | null>(null);
 
     // Dialog visibility
@@ -67,6 +71,12 @@ export class CheckTableDetailsComponent implements OnInit {
         isActive: false
     });
     selectedRow = signal<CheckTableDataRow | null>(null);
+
+    // Form validation
+    isFormValid = computed(() => {
+        const form = this.formRow();
+        return !!(form.keyValue?.trim() && form.description?.trim());
+    });
 
     // Fields to exclude from display (keep id for internal operations but hide from UI)
     private excludeFields = ['id', 'checkTableId', 'validFrom', 'validTo', 'createdDate', 'createdBy'];
@@ -116,6 +126,7 @@ export class CheckTableDetailsComponent implements OnInit {
                 const id = params['id'];
                 console.log('Route parameter ID:', id);
                 this.tableId.set(id);
+                this.importResetToken.update(value => value + 1);
                 this.loadTableData(id);
             } else {
                 this.errorMessage.set('No table ID provided');
@@ -255,78 +266,50 @@ export class CheckTableDetailsComponent implements OnInit {
     /**
      * Import data for check table values
      */
-    importData() {
-        // Create a hidden file input element
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.json,.csv,.xlsx,.xls';
-        fileInput.style.display = 'none';
-        
-        fileInput.addEventListener('change', (event: any) => {
-            const file = event.target.files[0];
-            if (file) {
-                this.processImportFile(file);
-            }
-            // Clean up
-            document.body.removeChild(fileInput);
-        });
-        
-        // Add to DOM and trigger click
-        document.body.appendChild(fileInput);
-        fileInput.click();
-    }
+    onCheckTableFileSubmit(file: File) {
+        const tableName = this.tableId();
+        if (!tableName) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Import Failed',
+                detail: 'No check table selected'
+            });
+            return;
+        }
 
-    /**
-     * Process the imported file
-     */
-    processImportFile(file: File) {
-        const reader = new FileReader();
         const fileName = file.name.toLowerCase();
-        
-        reader.onload = (event: any) => {
-            try {
-                let importedData: any[] = [];
-                const content = event.target.result;
-                
-                if (fileName.endsWith('.json')) {
-                    // Parse JSON file
-                    importedData = JSON.parse(content);
-                } else if (fileName.endsWith('.csv')) {
-                    // Parse CSV file
-                    importedData = this.parseCSV(content);
-                } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-                    // For Excel files, we'd need a library like xlsx
-                    this.messageService.add({
-                        severity: 'warn',
-                        summary: 'Excel Import',
-                        detail: 'Excel import requires additional library. Please use CSV or JSON format.'
-                    });
-                    return;
-                }
-                
-                // Process and validate imported data
-                const processedData = this.processImportedData(importedData);
-                
-                // Add to existing data
-                const currentData = this.tableData();
-                this.tableData.set([...currentData, ...processedData]);
-                
+        const isValidFile = fileName.endsWith('.csv') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+
+        if (!isValidFile) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Invalid File',
+                detail: 'Please select a CSV or Excel file (.csv, .xlsx, .xls)'
+            });
+            return;
+        }
+
+        this.isImporting.set(true);
+
+        this.checkTableService.uploadCheckTableFile(tableName, file).subscribe({
+            next: () => {
+                this.isImporting.set(false);
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Import Successful',
-                    detail: `Successfully imported ${processedData.length} records`
+                    detail: `${file.name} uploaded successfully for ${tableName}`
                 });
-                
-            } catch (error) {
+                this.reloadTableData();
+            },
+            error: (error: any) => {
+                this.isImporting.set(false);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Import Failed',
-                    detail: 'Failed to process the imported file. Please check the file format.'
+                    detail: error?.message || 'Failed to upload file'
                 });
             }
-        };
-        
-        reader.readAsText(file);
+        });
     }
 
     /**
@@ -400,6 +383,16 @@ export class CheckTableDetailsComponent implements OnInit {
         }
         
         return String(info);
+    }
+
+    /**
+     * Update a specific field in the form row signal
+     */
+    updateFormField(field: string, value: any) {
+        this.formRow.update(current => ({
+            ...current,
+            [field]: value
+        }));
     }
 
     /**
@@ -670,7 +663,10 @@ export class CheckTableDetailsComponent implements OnInit {
     updateIsActive(row: CheckTableDataRow, value: boolean) {
         const recordId = this.getRecordId(row);
         if (recordId) {
-            this.checkTableService.updateCheckTableValueStatus(recordId, value).subscribe({
+            // Update the entire record with the new isActive value
+            const updatedRow = { ...row, isActive: value };
+            
+            this.checkTableService.updateCheckTableValue(recordId, updatedRow).subscribe({
                 next: (response) => {
                     this.messageService.add({
                         severity: 'success',
@@ -681,6 +677,8 @@ export class CheckTableDetailsComponent implements OnInit {
                     this.reloadTableData();
                 },
                 error: (error: any) => {
+                    // Revert the toggle if update fails
+                    row.isActive = !value;
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',

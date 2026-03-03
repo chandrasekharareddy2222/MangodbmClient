@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RippleModule } from 'primeng/ripple';
@@ -9,6 +9,7 @@ import { filter } from 'rxjs/operators';
     selector: '[app-menuitem]',
     standalone: true,
     imports: [CommonModule, RouterModule, RippleModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         @if (root() && isVisible()) {
             <div class="layout-menuitem-root-text">{{ item().label }}</div>
@@ -27,7 +28,7 @@ import { filter } from 'rxjs/operators';
                 <span class="layout-menuitem-text">{{ item().label }}</span>
 
                 @if (hasChildren()) {
-                    <i [ngClass]="(expanded() || isExpanded()) ? 'pi pi-fw pi-angle-up layout-submenu-toggler' : 'pi pi-fw pi-angle-down layout-submenu-toggler'"></i>
+                    <i [ngClass]="((expanded() || isExpanded()) && !manuallyCollapsed()) ? 'pi pi-fw pi-angle-up layout-submenu-toggler' : 'pi pi-fw pi-angle-down layout-submenu-toggler'"></i>
                 }
             </a>
         }
@@ -38,7 +39,7 @@ import { filter } from 'rxjs/operators';
                 [ngClass]="item().class"
                 [routerLink]="item().routerLink"
                 routerLinkActive="active-route"
-                [routerLinkActiveOptions]="{ paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored' }"
+                [routerLinkActiveOptions]="{ paths: 'exact', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored' }"
                 tabindex="0"
                 pRipple
             >
@@ -47,13 +48,13 @@ import { filter } from 'rxjs/operators';
             </a>
         }
 
-        @if (hasChildren() && isVisible() && (root() || expanded() || isExpanded())) {
+        @if (hasChildren() && isVisible() && !manuallyCollapsed() && (root() || expanded() || isExpanded())) {
             <ul
                 [animate.enter]="initialized() ? 'p-submenu-enter' : null"
                 [animate.leave]="'p-submenu-leave'"
                 [class.layout-root-submenulist]="root()"
             >
-                @for (child of item().items; track $index) {
+                @for (child of item().items; track trackChild($index, child)) {
                     <li
                         app-menuitem
                         [item]="child"
@@ -101,7 +102,8 @@ export class AppMenuitem {
     parentPath = input<string | null>(null);
 
     initialized = signal<boolean>(false);
-    expanded = signal<boolean>(false);   // ✅ NEW (only for dropdown toggle)
+    expanded = signal<boolean>(false);   // ✅ Manual toggle state
+    manuallyCollapsed = signal<boolean>(false);  // Track if user manually collapsed this item
 
     isVisible = computed(() => this.item()?.visible !== false);
     hasChildren = computed(() => this.item()?.items && this.item()?.items.length > 0);
@@ -130,7 +132,23 @@ export class AppMenuitem {
             .pipe(filter((event) => event instanceof NavigationEnd))
             .subscribe(() => {
                 this.initialized.set(true);
+                // Reset manual collapse state on navigation
+                // This allows route-based expansion to work again
+                this.manuallyCollapsed.set(false);
+                // Collapse manually expanded menus when navigation completes
+                // This ensures parent menus close after clicking a child link
+                if (this.hasChildren() && !this.root()) {
+                    this.expanded.set(false);
+                }
             });
+    }
+
+    /**
+     * Track child menu items - include child count to force recreation when structure changes
+     */
+    trackChild(index: number, child: any): string {
+        const childCount = child.items?.length || 0;
+        return `${child.label || index}-${childCount}`;
     }
 
     itemClick(event: Event) {
@@ -143,9 +161,21 @@ export class AppMenuitem {
 
         // ✅ TOGGLE expansion for any menu item with children
         if (this.hasChildren() && !this.hasRouterLink()) {
+            // Check if submenu is currently SHOWING (considering all conditions including manuallyCollapsed)
+            const isCurrentlyShowing = !this.manuallyCollapsed() && (this.expanded() || this.isExpanded());
+            
+            // Toggle manual expansion
             this.expanded.update(val => !val);
+            // Set manuallyCollapsed to true only when CLOSING, false when OPENING
+            this.manuallyCollapsed.set(isCurrentlyShowing);
+            
             event.preventDefault();
             return;
+        }
+
+        // Collapse this menu item when clicked (for leaf items with routerLink)
+        if (this.hasRouterLink() && !this.hasChildren()) {
+            this.expanded.set(false);
         }
 
         if (item?.command) {

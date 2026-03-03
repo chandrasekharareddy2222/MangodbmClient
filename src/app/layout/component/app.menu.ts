@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, effect } from '@angular/core';
+import { Component, OnInit, inject, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
@@ -10,8 +10,9 @@ import { CheckTable } from '../../core/models/check-table.model';
     selector: 'app-menu',
     standalone: true,
     imports: [CommonModule, AppMenuitem, RouterModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `<ul class="layout-menu">
-        @for (item of model; track item.label) {
+        @for (item of model; track trackByFn($index, item)) {
             @if (!item.separator) {
                 <li app-menuitem [item]="item" [root]="true"></li>
             } @else {
@@ -23,12 +24,17 @@ import { CheckTable } from '../../core/models/check-table.model';
 export class AppMenu implements OnInit {
     private checkTableService = inject(CheckTableService);
     model: MenuItem[] = [];
+    private menuVersion = 0; // Counter to force recreation
 
     constructor() {
+        // Build initial menu structure immediately (with empty check tables)
+        this.buildMenu();
+        
         // Auto-rebuild menu whenever check tables signal changes
         effect(() => {
             const tables = this.checkTableService.checkTables();
             console.log('Effect triggered - Tables updated:', tables);
+            this.menuVersion++; // Increment to force recreation
             this.buildMenu();
         });
     }
@@ -44,6 +50,16 @@ export class AppMenu implements OnInit {
                 console.error('Failed to load check tables for menu', error);
             }
         });
+    }
+
+    /**
+     * Track function for menu items to force re-render when items array changes
+     */
+    trackByFn(index: number, item: MenuItem): string {
+        // Include the number of sub-items and menu version in the tracking key
+        // This forces Angular to recreate the component when children are added/removed
+        const childCount = item.items?.length || 0;
+        return `${item.label}-${childCount}-v${this.menuVersion}`;
     }
 
     /**
@@ -81,6 +97,7 @@ export class AppMenu implements OnInit {
         console.log('Building menu with', checkTableItems.length, 'table items');
         
         // Create a NEW array reference to trigger change detection
+        // Ensure that each object is also newly created
         this.model = [
             {
                 label: 'Home',
@@ -98,7 +115,8 @@ export class AppMenu implements OnInit {
                     {
                         label: 'Check Tables',
                         icon: 'pi pi-check-square',
-                        items: checkTableItems
+                        path: '/materials/check-table',
+                        items: [...checkTableItems]  // Create new array reference
                     },
                     {
                         label: 'Material Entry',

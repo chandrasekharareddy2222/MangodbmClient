@@ -627,4 +627,27 @@ export class CheckTableService {
 
   }
 
+  /**
+   * Upload check table file for a specific table
+   * Endpoint: /check-table-value/upload/tableName={tableName}
+   */
+  uploadCheckTableFile(tableName: string, file: File): Observable<any> {
+    const url = `${this.API_BASE}${this.CHECK_TABLE_DATA_ENDPOINT}/upload/tableName=${tableName}`;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.logger.info('Uploading check table file', { tableName, fileName: file.name, url });
+
+    return this.http.post<any>(url, formData).pipe(
+      tap(() => {
+        this.logger.info('Check table file uploaded successfully', { tableName, fileName: file.name });
+      }),
+      catchError((error: any) => {
+        this.logger.error(`Error uploading check table file for ${tableName}`, error);
+        const errorMsg = error?.error?.message || error?.message || 'Failed to upload check table file';
+        return throwError(() => new Error(errorMsg));
+      })
+    );
+  }
+
 }

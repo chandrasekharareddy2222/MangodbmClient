@@ -1,0 +1,35 @@
+.file-import-section {
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+
+  .file-import-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .file-import-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .file-input-wrapper {
+    .file-input {
+      display: none;
+    }
+  }
+
+  .selected-file {
+    color: var(--text-color-secondary);
+    max-width: 360px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

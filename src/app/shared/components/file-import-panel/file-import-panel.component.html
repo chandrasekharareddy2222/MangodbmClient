@@ -1,0 +1,50 @@
+<div class="file-import-section">
+  <div class="file-import-header">
+    <i class="pi pi-upload"></i>
+    <span>{{ title }}</span>
+  </div>
+
+  <div class="file-import-controls">
+    <div class="file-input-wrapper">
+      <input
+        #fileInput
+        type="file"
+        [accept]="accept"
+        (change)="onFileSelected($event)"
+        class="file-input"
+        [disabled]="isLoading"
+      />
+      <p-button
+        icon="pi pi-folder-open"
+        [disabled]="isLoading"
+        (onClick)="fileInput.click()"
+        [pTooltip]="selectTooltip"
+        tooltipPosition="bottom"
+        text
+        severity="secondary"
+      ></p-button>
+    </div>
+
+    <span class="selected-file" *ngIf="selectedFile()">
+      {{ selectedFile()?.name }}
+    </span>
+
+    <p-button
+      [label]="submitLabel"
+      icon="pi pi-check"
+      [loading]="isLoading"
+      [disabled]="!selectedFile() || isLoading"
+      (onClick)="onSubmit()"
+      severity="success"
+    ></p-button>
+
+    <p-button
+      [label]="refreshLabel"
+      icon="pi pi-refresh"
+      [disabled]="!selectedFile() || isLoading"
+      (onClick)="onRefresh(fileInput)"
+      severity="secondary"
+      text
+    ></p-button>
+  </div>
+</div>

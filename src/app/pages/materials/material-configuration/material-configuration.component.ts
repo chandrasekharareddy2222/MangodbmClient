@@ -23,6 +23,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MetadataService } from '../../../core/services/metadata.service';
 import { CheckTableService } from '../../../core/services/check-table.service';
 import { FieldMetadata } from '../../../core/models/field-metadata.model';
+import { FileImportPanelComponent } from '../../../shared/components/file-import-panel/file-import-panel.component';
 
 /**
  * Material Configuration Component
@@ -51,7 +52,8 @@ import { FieldMetadata } from '../../../core/models/field-metadata.model';
     IconFieldModule,
     InputIconModule,
     ToastModule,
-    DialogModule
+    DialogModule,
+    FileImportPanelComponent
   ],
   providers: [MessageService],
   templateUrl: './material-configuration.component.html',
@@ -420,12 +422,9 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle CSV file selection
+   * Handle file submit from shared import component
    */
-  onCsvFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-
+  onMetadataFileSubmit(file: File): void {
     if (!file) {
       return;
     }
@@ -444,28 +443,6 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
     }
 
     this.selectedCsvFile.set(file);
-    this.messageService.add({
-      severity: 'info',
-      summary: 'File Selected',
-      detail: `Selected: ${file.name}. Click Submit to import.`,
-      life: 3000
-    });
-  }
-
-  /**
-   * Submit CSV import
-   */
-  submitCsvImport(): void {
-    const file = this.selectedCsvFile();
-    if (!file) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'No File Selected',
-        detail: 'Please select a CSV or Excel file first',
-        life: 3000
-      });
-      return;
-    }
     this.importCsvFile(file);
   }
 
@@ -474,10 +451,6 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
    */
   refreshCsvImport(): void {
     this.selectedCsvFile.set(null);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
     this.messageService.add({
       severity: 'info',
       summary: 'Selection Cleared',
@@ -493,10 +466,6 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
     this.importResult.set(null);
     this.importErrors.set([]);
     this.selectedCsvFile.set(null);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
   }
 
   /**
@@ -558,11 +527,7 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
           });
         }
 
-        // Reset file input
-        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-        if (fileInput) {
-          fileInput.value = '';
-        }
+        this.selectedCsvFile.set(null);
       },
       error: (err) => {
         this.isImporting.set(false);
@@ -577,11 +542,7 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
           life: 5000
         });
 
-        // Reset file input
-        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-        if (fileInput) {
-          fileInput.value = '';
-        }
+        this.selectedCsvFile.set(null);
       }
     });
   }

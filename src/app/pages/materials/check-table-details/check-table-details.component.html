@@ -3,10 +3,18 @@
     <div class="header-section">
         <h2>Check Table Details: {{ tableId() }}</h2>
         <div class="header-actions">
-            <button pButton type="button" label="Import" icon="pi pi-upload" class="p-button-info" (click)="importData()"></button>
             <button pButton type="button" label="New" icon="pi pi-plus" class="p-button-success" (click)="newRecord()"></button>
         </div>
     </div>
+
+    <app-file-import-panel
+        title="Import Check Table Data from CSV or Excel"
+        accept=".csv,.xlsx,.xls"
+        [isLoading]="isImporting()"
+        [resetToken]="importResetToken()"
+        [selectTooltip]="'Select CSV or Excel file to upload'"
+        (submitFile)="onCheckTableFileSubmit($event)"
+    ></app-file-import-panel>
 
     <!-- Error Message -->
     @if (errorMessage(); as error) {
@@ -75,7 +83,6 @@
                             <td [style]="{'width':'140px'}">
                                 <div class="action-buttons">
                                     <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-text edit-btn" (click)="editRow(rowData)" pTooltip="Edit" tooltipPosition="top"></button>
-                                    <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-text delete-btn" (click)="deleteRow(rowData)" pTooltip="Delete" tooltipPosition="top"></button>
                                 </div>
                             </td>
                         </tr>
@@ -102,37 +109,25 @@
     <p-dialog header="{{ editDialogVisible() ? 'Edit Record' : 'New Record' }}" [visible]="formDialogVisible()" (onHide)="newDialogVisible.set(false); editDialogVisible.set(false)" modal="true" [closable]="false" [dismissableMask]="true" [style]="{width:'500px', maxWidth: '85vw'}">
         <div class="p-fluid">
             <div class="p-field">
-                <label for="tableName">Table Name</label>
-                <input id="tableName" pInputText [(ngModel)]="formRow().tableName" [disabled]="true" />
+                <label for="keyValue">Key Value <span style="color: red;">*</span></label>
+                <input id="keyValue" pInputText [ngModel]="formRow().keyValue" (ngModelChange)="updateFormField('keyValue', $event)" placeholder="Enter key value" required />
             </div>
             <div class="p-field">
-                <label for="keyValue">Key Value</label>
-                <input id="keyValue" pInputText [(ngModel)]="formRow().keyValue" />
-            </div>
-            <div class="p-field">
-                <label for="description">Description</label>
-                <textarea id="description" pTextarea rows="3" [(ngModel)]="formRow().description"></textarea>
+                <label for="description">Description <span style="color: red;">*</span></label>
+                <textarea id="description" pTextarea rows="3" [ngModel]="formRow().description" (ngModelChange)="updateFormField('description', $event)" placeholder="Enter description" required></textarea>
             </div>
             <div class="p-field">
                 <label for="additionalInfo">Additional Info</label>
-                <textarea id="additionalInfo" pTextarea rows="4" [(ngModel)]="formRow().additionalInfo" placeholder="Enter additional information..."></textarea>
+                <textarea id="additionalInfo" pTextarea rows="4" [ngModel]="formRow().additionalInfo" (ngModelChange)="updateFormField('additionalInfo', $event)" placeholder="Enter additional information..."></textarea>
             </div>
             <!-- Active checkbox removed from Create/Edit forms as requested -->
         </div>
         <ng-template pTemplate="footer">
             <button pButton label="Cancel" icon="pi pi-times" class="p-button-text" (click)="newDialogVisible.set(false); editDialogVisible.set(false)"></button>
-            <button pButton label="Save" icon="pi pi-check" class="p-button-success" (click)="saveDialog()"></button>
+            <button pButton label="Save" icon="pi pi-check" class="p-button-success" (click)="saveDialog()" [disabled]="!isFormValid()"></button>
         </ng-template>
     </p-dialog>
 
-    <!-- Delete Confirmation Dialog -->
-    <p-dialog header="Confirm" [visible]="deleteDialogVisible()" (onHide)="cancelDelete()" modal="true" [closable]="false" [dismissableMask]="true" [style]="{width:'350px'}">
-        <p>Are you sure you want to delete this record?</p>
-        <ng-template pTemplate="footer">
-            <button pButton label="No" icon="pi pi-times" class="p-button-text" (click)="cancelDelete()"></button>
-            <button pButton label="Yes" icon="pi pi-check" class="p-button-text" (click)="confirmDelete()"></button>
-        </ng-template>
-    </p-dialog>
 </div>
 
 <p-toast position="top-right"></p-toast>
