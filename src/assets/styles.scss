@@ -15,3 +15,129 @@
     --p-primary-800: #283869;
     --p-primary-900: #1e2954;
 }
+
+/* Custom PrimeNG component backgrounds */
+.layout-wrapper {
+    background-color: #fafafa !important;
+}
+
+.layout-static {
+    background-color: #fafafa !important;
+}
+
+.p-card {
+    background-color: #fafafa !important;
+    border: 1px solid var(--surface-border) !important;
+}
+
+.card {
+    background-color: #fafafa !important;
+    border: 1px solid var(--surface-border) !important;
+    border-radius: var(--content-border-radius) !important;
+}
+
+/* Page section backgrounds */
+.check-table-details-container {
+    background-color: #fafafa !important;
+}
+
+.header-section {
+    background-color: #fafafa !important;
+}
+
+.file-import-section {
+    background-color: #fafafa !important;
+}
+
+.card-header {
+    background-color: #fafafa !important;
+}
+
+.p-datatable .p-datatable-table {
+    background-color: #fafafa !important;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+    background-color: #fafafa !important;
+}
+
+.p-datatable .p-datatable-tbody > tr {
+    background-color: #fafafa !important;
+}
+
+.p-panel {
+    background-color: #fafafa !important;
+}
+
+.p-panel .p-panel-header {
+    background-color: #fafafa !important;
+}
+
+.p-panel .p-panel-content {
+    background-color: #fafafa !important;
+}
+
+.p-paginator {
+    background-color: #fafafa !important;
+}
+
+/* Input components */
+.p-inputtext {
+    background-color: #fafafa !important;
+}
+
+.p-inputtextarea {
+    background-color: #fafafa !important;
+}
+
+.p-inputnumber input {
+    background-color: #fafafa !important;
+}
+
+.p-dropdown {
+    background-color: #fafafa !important;
+}
+
+.p-select {
+    background-color: #fafafa !important;
+}
+
+.p-multiselect {
+    background-color: #fafafa !important;
+}
+
+.p-calendar input {
+    background-color: #fafafa !important;
+}
+
+.p-autocomplete input {
+    background-color: #fafafa !important;
+}
+
+.p-chips .p-chips-multiple-container {
+    background-color: #fafafa !important;
+}
+
+.p-listbox {
+    background-color: #fafafa !important;
+}
+
+.p-selectbutton .p-button {
+    background-color: #fafafa !important;
+}
+
+.p-checkbox .p-checkbox-box {
+    background-color: #fafafa !important;
+}
+
+.p-radiobutton .p-radiobutton-box {
+    background-color: #fafafa !important;
+}
+
+.p-inputswitch {
+    background-color: #fafafa !important;
+}
+
+.p-textarea {
+    background-color: #fafafa !important;
+}

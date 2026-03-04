@@ -8,6 +8,7 @@ import Lara from '@primeuix/themes/lara';
 import Nora from '@primeuix/themes/nora';
 import { PrimeNG } from 'primeng/config';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { ColorPickerModule } from 'primeng/colorpicker';
 import { LayoutService } from '@/app/layout/service/layout.service';
 
 const presets = {
@@ -39,7 +40,7 @@ declare type SurfacesType = {
 @Component({
     selector: 'app-configurator',
     standalone: true,
-    imports: [CommonModule, FormsModule, SelectButtonModule],
+    imports: [CommonModule, FormsModule, SelectButtonModule, ColorPickerModule],
     template: `
         <div class="flex flex-col gap-4">
             <div>
@@ -81,6 +82,26 @@ declare type SurfacesType = {
                     }
                 </div>
             </div>
+            <div>
+                <span class="text-sm text-muted-color font-semibold">Background</span>
+                <div class="pt-2 flex flex-col gap-2">
+                    <p-colorPicker 
+                        [ngModel]="selectedBackground().replace('#', '')" 
+                        (ngModelChange)="onBackgroundColorChange($event)"
+                        [inline]="false"
+                        [format]="'hex'"
+                        styleClass="w-full"
+                    ></p-colorPicker>
+                    <input 
+                        type="text" 
+                        [value]="selectedBackground()" 
+                        (input)="onBackgroundColorChange($any($event).target.value)"
+                        placeholder="#fafafa"
+                        class="p-inputtext p-component w-full text-sm"
+                        maxlength="7"
+                    />
+                </div>
+            </div>
             <div class="flex flex-col gap-2">
                 <span class="text-sm text-muted-color font-semibold">Presets</span>
                 <p-selectbutton [options]="presets" [ngModel]="selectedPreset()" (ngModelChange)="onPresetChange($event)" [allowEmpty]="false" size="small" />
@@ -118,6 +139,7 @@ export class AppConfigurator {
     ngOnInit() {
         if (isPlatformBrowser(this.platformId)) {
             this.onPresetChange(this.layoutService.layoutConfig().preset);
+            this.applyBackgroundColor(this.layoutService.layoutConfig().background);
         }
     }
 
@@ -267,6 +289,8 @@ export class AppConfigurator {
     selectedSurfaceColor = computed(() => this.layoutService.layoutConfig().surface);
 
     selectedPreset = computed(() => this.layoutService.layoutConfig().preset);
+
+    selectedBackground = computed(() => this.layoutService.layoutConfig().background);
 
     menuMode = computed(() => this.layoutService.layoutConfig().menuMode);
 
@@ -442,5 +466,66 @@ export class AppConfigurator {
 
     onMenuModeChange(event: string) {
         this.layoutService.layoutConfig.update((prev) => ({ ...prev, menuMode: event }));
+    }
+
+    onBackgroundColorChange(color: string) {
+        // Ensure color has # prefix
+        if (color && !color.startsWith('#')) {
+            color = '#' + color;
+        }
+        // Validate hex color format
+        if (color && color.match(/^#[0-9A-Fa-f]{6}$/)) {
+            this.layoutService.layoutConfig.update((state) => ({ ...state, background: color }));
+            this.applyBackgroundColor(color);
+        }
+    }
+
+    applyBackgroundColor(color: string) {
+        if (isPlatformBrowser(this.platformId)) {
+            // Create or update a style element for background colors
+            let styleElement = document.getElementById('custom-background-styles') as HTMLStyleElement;
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = 'custom-background-styles';
+                document.head.appendChild(styleElement);
+            }
+            
+            // Update styles with !important to override existing styles
+            styleElement.textContent = `
+                .layout-wrapper { background-color: ${color} !important; }
+                .layout-static { background-color: ${color} !important; }
+                .layout-topbar { background-color: ${color} !important; }
+                .layout-sidebar { background-color: ${color} !important; }
+                .layout-main-container { background-color: ${color} !important; }
+                .check-table-details-container { background-color: ${color} !important; }
+                .header-section { background-color: ${color} !important; }
+                .file-import-section { background-color: ${color} !important; }
+                .card-header { background-color: ${color} !important; }
+                .p-card { background-color: ${color} !important; border: 1px solid var(--surface-border) !important; }
+                .card { background-color: ${color} !important; border: 1px solid var(--surface-border) !important; border-radius: var(--content-border-radius) !important; }
+                .p-datatable .p-datatable-table { background-color: ${color} !important; }
+                .p-datatable .p-datatable-thead > tr > th { background-color: ${color} !important; }
+                .p-datatable .p-datatable-tbody > tr { background-color: ${color} !important; }
+                .p-panel { background-color: ${color} !important; }
+                .p-panel .p-panel-header { background-color: ${color} !important; }
+                .p-panel .p-panel-content { background-color: ${color} !important; }
+                .p-paginator { background-color: ${color} !important; }
+                .p-inputtext { background-color: ${color} !important; }
+                .p-inputtextarea { background-color: ${color} !important; }
+                .p-inputnumber input { background-color: ${color} !important; }
+                .p-dropdown { background-color: ${color} !important; }
+                .p-select { background-color: ${color} !important; }
+                .p-multiselect { background-color: ${color} !important; }
+                .p-calendar input { background-color: ${color} !important; }
+                .p-autocomplete input { background-color: ${color} !important; }
+                .p-chips .p-chips-multiple-container { background-color: ${color} !important; }
+                .p-listbox { background-color: ${color} !important; }
+                .p-selectbutton .p-button { background-color: ${color} !important; }
+                .p-checkbox .p-checkbox-box { background-color: ${color} !important; }
+                .p-radiobutton .p-radiobutton-box { background-color: ${color} !important; }
+                .p-inputswitch { background-color: ${color} !important; }
+                .p-textarea { background-color: ${color} !important; }
+            `;
+        }
     }
 }

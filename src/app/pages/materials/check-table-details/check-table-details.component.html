@@ -1,7 +1,13 @@
 <div class="check-table-details-container">
     <!-- Header -->
     <div class="header-section">
-        <h2>Check Table Details: {{ tableId() }}</h2>
+        <div class="header-left">
+            <button pButton type="button" icon="pi pi-arrow-left" class="p-button-text p-button-plain" 
+                    (click)="navigateToSearch()" 
+                    pTooltip="Back to Search" 
+                    tooltipPosition="bottom"></button>
+            <h2>Check Table Details: {{ tableId() }}</h2>
+        </div>
         <div class="header-actions">
             <button pButton type="button" label="New" icon="pi pi-plus" class="p-button-success" (click)="newRecord()"></button>
         </div>

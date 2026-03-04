@@ -1,7 +1,7 @@
 import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -44,6 +44,7 @@ import { FileImportPanelComponent } from '../../../shared/components/file-import
 })
 export class CheckTableDetailsComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
     private checkTableService = inject(CheckTableService);
     private messageService = inject(MessageService);
 
@@ -54,6 +55,7 @@ export class CheckTableDetailsComponent implements OnInit {
     isImporting = signal<boolean>(false);
     importResetToken = signal<number>(0);
     errorMessage = signal<string | null>(null);
+    originalSearchTerm = signal<string>('');
 
     // Dialog visibility
     newDialogVisible = signal<boolean>(false);
@@ -120,6 +122,14 @@ export class CheckTableDetailsComponent implements OnInit {
     }
 
     ngOnInit() {
+        // Get search term from query params (if navigated from search page)
+        this.activatedRoute.queryParams.subscribe(params => {
+            if (params['from']) {
+                this.originalSearchTerm.set(params['from']);
+                console.log('Original search term:', params['from']);
+            }
+        });
+        
         // Get table ID from route parameter
         this.activatedRoute.params.subscribe(params => {
             if (params['id']) {
@@ -183,6 +193,20 @@ export class CheckTableDetailsComponent implements OnInit {
                 });
             }
         });
+    }
+
+    /**
+     * Navigate back to search page with original search term
+     */
+    navigateToSearch(): void {
+        const searchTerm = this.originalSearchTerm();
+        if (searchTerm) {
+            this.router.navigate(['/materials/check-tables-list'], {
+                queryParams: { search: searchTerm }
+            });
+        } else {
+            this.router.navigate(['/materials/check-tables-list']);
+        }
     }
 
     /**

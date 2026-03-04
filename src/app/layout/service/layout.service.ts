@@ -6,6 +6,7 @@ export interface LayoutConfig {
     surface: string | undefined | null;
     darkTheme: boolean;
     menuMode: string;
+    background: string;
 }
 
 interface LayoutState {
@@ -26,7 +27,8 @@ export class LayoutService {
         primary: 'emerald',
         surface: null,
         darkTheme: false,
-        menuMode: 'static'
+        menuMode: 'static',
+        background: '#fafafa'
     });
 
     layoutState = signal<LayoutState>({

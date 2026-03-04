@@ -1,0 +1,88 @@
+<div class="check-tables-list-container">
+    <p-card>
+        <ng-template pTemplate="header">
+            <div class="card-header">
+                <h2>Check Tables</h2>
+                <p class="text-muted">Search and select a check table to manage</p>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="content">
+            <!-- Loading State -->
+            <div *ngIf="isLoading()" class="loading-container">
+                <p-progressSpinner strokeWidth="4" />
+                <p>Loading check tables...</p>
+            </div>
+
+            <!-- Error State -->
+            <div *ngIf="error() && !isLoading()" class="error-container">
+                <i class="pi pi-exclamation-triangle"></i>
+                <p>{{ error() }}</p>
+            </div>
+
+            <!-- Search Input -->
+            <div *ngIf="!isLoading() && !error()" class="search-section">
+                <div class="search-container">
+                    <p-iconfield iconPosition="left" class="search-input-wrapper">
+                        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                        <input 
+                            pInputText 
+                            type="text" 
+                            [(ngModel)]="searchText"
+                            placeholder="Search check tables..." 
+                            class="search-input"
+                        />
+                        <button 
+                            *ngIf="searchText" 
+                            pButton 
+                            type="button"
+                            icon="pi pi-times" 
+                            (click)="clearSearch()"
+                            class="p-button-text p-button-rounded clear-button"
+                            pTooltip="Clear search"
+                            tooltipPosition="top"
+                        ></button>
+                    </p-iconfield>
+                    <p-button 
+                        [icon]="isListening() ? 'pi pi-circle-fill' : 'pi pi-microphone'"
+                        [class.listening]="isListening()"
+                        (onClick)="startVoiceRecognition()"
+                        [pTooltip]="isListening() ? 'Listening - speak now...' : 'Click to start voice search'"
+                        tooltipPosition="bottom"
+                        [rounded]="true"
+                        text
+                    ></p-button>
+                </div>
+            </div>
+            
+            <p-toast></p-toast>
+
+            <!-- Tables Chips -->
+            <div *ngIf="!isLoading() && !error() && visibleTables().length > 0" class="tables-chips">
+                <h3>All Check Tables <span *ngIf="searchText" class="search-results">({{ visibleTables().length }} results)</span></h3>
+                <div class="chips-container">
+                    <p-chip 
+                        *ngFor="let table of visibleTables()" 
+                        [label]="getTableDisplayName(table)"
+                        icon="pi pi-table"
+                        styleClass="table-chip"
+                        (click)="navigateToTable(table)">
+                    </p-chip>
+                </div>
+            </div>
+
+            <!-- No Results State -->
+            <div *ngIf="!isLoading() && !error() && searchText && visibleTables().length === 0" class="no-results">
+                <i class="pi pi-search"></i>
+                <p>No check tables found for "{{ searchText }}"</p>
+                <button pButton label="Clear Search" icon="pi pi-times" (click)="clearSearch()" class="p-button-sm p-button-outlined"></button>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!isLoading() && !error() && checkTables().length === 0" class="empty-container">
+                <i class="pi pi-inbox"></i>
+                <p>No check tables available</p>
+            </div>
+        </ng-template>
+    </p-card>
+</div>

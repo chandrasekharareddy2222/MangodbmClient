@@ -113,10 +113,9 @@ export class AppMenu implements OnInit {
                         routerLink: ['/materials/configuration']
                     },
                     {
-                        label: 'Check Tables',
+                        label: 'Table Configuration',
                         icon: 'pi pi-check-square',
-                        path: '/materials/check-table',
-                        items: [...checkTableItems]  // Create new array reference
+                        routerLink: ['/materials/check-tables-list']
                     },
                     {
                         label: 'Material Entry',

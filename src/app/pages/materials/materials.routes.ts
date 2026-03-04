@@ -3,6 +3,7 @@ import { DynamicMaterialFormComponent } from './dynamic-material-form/dynamic-ma
 import { MaterialConfigurationComponent } from './material-configuration/material-configuration.component';
 import { CheckTableConfigurationComponent } from './check-table-configuration/check-table-configuration.component';
 import { CheckTableDetailsComponent } from './check-table-details/check-table-details.component';
+import { CheckTablesListComponent } from './check-tables-list/check-tables-list.component';
 
 export default [
   { 
@@ -14,6 +15,11 @@ export default [
     path: 'configuration', 
     component: MaterialConfigurationComponent,
     data: { title: 'Material Configuration' }
+  },
+  { 
+    path: 'check-tables-list', 
+    component: CheckTablesListComponent,
+    data: { title: 'Check Tables List' }
   },
   { 
     path: 'check-table/:id', 
