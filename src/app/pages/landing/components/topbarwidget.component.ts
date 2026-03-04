@@ -9,7 +9,7 @@ import {AppFloatingConfigurator} from "@/app/layout/component/app.floatingconfig
     selector: 'topbar-widget',
     imports: [RouterModule, StyleClassModule, ButtonModule, RippleModule, AppFloatingConfigurator],
     template: `<a class="flex items-center" href="#">
-            <img src="assets/logo.jpeg" alt="Logo" class="h-12 mr-2" />
+            <img src="assets/logo.png" alt="Logo" class="h-12 mr-2" />
             <span class="text-surface-900 dark:text-surface-0 font-medium text-2xl leading-normal mr-20">MANGO DBM</span>
         </a>
 

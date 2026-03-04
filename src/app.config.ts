@@ -1,7 +1,7 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
-import Aura from '@primeuix/themes/aura';
+import Nora from '@primeuix/themes/nora';
 import { providePrimeNG } from 'primeng/config';
 import { appRoutes } from './app.routes';
 
@@ -12,7 +12,7 @@ export const appConfig: ApplicationConfig = {
         provideZonelessChangeDetection(),
         providePrimeNG({ 
             theme: { 
-                preset: Aura, 
+                preset: Nora, 
                 options: { 
                     darkModeSelector: '.app-dark',
                     cssVariables: true

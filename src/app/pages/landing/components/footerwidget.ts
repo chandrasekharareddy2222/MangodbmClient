@@ -9,7 +9,7 @@ import { Router, RouterModule } from '@angular/router';
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12 md:col-span-2">
                     <a (click)="router.navigate(['/pages/landing'], { fragment: 'home' })" class="flex flex-wrap items-center justify-center md:justify-start md:mb-0 mb-6 cursor-pointer">
-                        <img src="assets/logo.jpeg" alt="Logo" class="h-14 mr-2" />
+                        <img src="assets/logo.png" alt="Logo" class="h-14 mr-2" />
                         <h4 class="font-medium text-3xl text-surface-900 dark:text-surface-0">MANGO DBM</h4>
                     </a>
                 </div>

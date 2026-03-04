@@ -4,15 +4,15 @@
     margin: 0 auto;
 
     ::ng-deep .p-card {
-        background-color: #fafafa;
+        background-color: #a8c5e3;
         
         .p-card-header {
-            background-color: #fafafa;
+            background-color: #a8c5e3;
             padding: 2rem 2rem 0;
         }
 
         .p-card-body {
-            background-color: #fafafa;
+            background-color: #a8c5e3;
             padding: 2rem;
         }
     }
@@ -78,7 +78,7 @@
                 width: 100%;
 
                 .p-inputtext {
-                    background-color: #fafafa;
+                    background-color: #a8c5e3;
                     border: 1px solid var(--surface-border);
                     width: 100%;
                     padding-right: 2.5rem; // Make room for clear button
@@ -152,7 +152,7 @@
             gap: 1rem;
 
             ::ng-deep .table-chip {
-                background-color: #ffffff;
+                background-color: #a8c5e3;
                 border: 1px solid var(--surface-border);
                 cursor: pointer;
                 transition: all 0.2s ease;

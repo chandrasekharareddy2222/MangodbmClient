@@ -16,7 +16,7 @@ import { LayoutService } from '@/app/layout/service/layout.service';
                 <i class="pi pi-bars"></i>
             </button>
             <a class="layout-topbar-logo" routerLink="/">
-                <img src="assets/logo.jpeg" alt="Logo" />
+                <img src="assets/logo.png" alt="Logo" />
                 <span>MANGO DBM</span>
             </a>
         </div>
