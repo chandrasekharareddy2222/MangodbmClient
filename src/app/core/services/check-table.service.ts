@@ -632,7 +632,7 @@ export class CheckTableService {
    * Endpoint: /check-table-value/upload/tableName={tableName}
    */
   uploadCheckTableFile(tableName: string, file: File): Observable<any> {
-    const url = `${this.API_BASE}${this.CHECK_TABLE_DATA_ENDPOINT}/upload/tableName=${tableName}`;
+    const url = `${this.API_BASE}${this.CHECK_TABLE_DATA_ENDPOINT}/upload?tableName=${tableName}`;
     const formData = new FormData();
     formData.append('file', file);
 
