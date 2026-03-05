@@ -161,6 +161,81 @@
         }
       }
 
+      // Per-group collapsible panels
+      ::ng-deep .field-group-panel {
+        margin-bottom: 0.75rem;
+
+        .p-panel-content {
+          padding: 1rem 1.25rem;
+        }
+
+        .fields-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.75rem;
+
+          @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+          }
+        }
+      }
+
+      // Main Block Panel (Level 1 - uiAssignmentBlock)
+      ::ng-deep .main-block-panel {
+        margin-bottom: 1.5rem;
+        border: 2px solid #d0d5dd;
+        border-radius: 6px;
+
+        .p-panel-header {
+          background-color: #f3f4f6;
+          font-weight: 700;
+          font-size: 1.1rem;
+          padding: 1.25rem !important;
+          color: #1f2937;
+        }
+
+        .p-panel-content {
+          padding: 1rem;
+          background-color: #fafbfc;
+        }
+      }
+
+      // Subject Panel (Level 2 - subjects/child headers)
+      ::ng-deep .subject-panel {
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 4px;
+        background-color: #ffffff;
+
+        .p-panel-header {
+          background-color: #ffffff;
+          font-weight: 600;
+          font-size: 1rem;
+          padding: 1rem !important;
+          color: #374151;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .p-panel-content {
+          padding: 1.25rem;
+          background-color: #ffffff;
+        }
+
+        .fields-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.75rem;
+
+          @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+          }
+        }
+      }
+
+      .block-placeholder {
+        padding: 1rem;
+      }
+
       .field-group {
         display: flex;
         flex-direction: column;

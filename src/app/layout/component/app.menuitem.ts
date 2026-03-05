@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RippleModule } from 'primeng/ripple';
 import { LayoutService } from '@/app/layout/service/layout.service';
 import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: '[app-menuitem]',
@@ -129,7 +130,10 @@ export class AppMenuitem {
 
     constructor() {
         this.router.events
-            .pipe(filter((event) => event instanceof NavigationEnd))
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                takeUntilDestroyed()  // Prevents subscription leak when component is destroyed
+            )
             .subscribe(() => {
                 this.initialized.set(true);
                 // Reset manual collapse state on navigation

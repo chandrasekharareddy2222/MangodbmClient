@@ -52,92 +52,130 @@
         </div>
 
         <!-- Dynamic Fields Panel -->
-        <p-panel [toggleable]="true">
-          <ng-template pTemplate="header">
-            <div class="attributes-header">
-              <i class="pi pi-list"></i>
-              <span>Material Attributes</span>
-            </div>
-          </ng-template>
-
-          <!-- Skeleton while metadata loads -->
-          <div *ngIf="isLoading()" class="form-section">
-            <div class="fields-grid">
-              <div *ngFor="let s of skeletonFields" class="field-group skeleton-field-group">
-                <div class="skeleton-bar skeleton-label"></div>
-                <div class="skeleton-bar skeleton-input"></div>
-              </div>
+        <!-- Skeleton while metadata loads -->
+        <div *ngIf="isLoading()" class="form-section">
+          <div class="fields-grid">
+            <div *ngFor="let s of skeletonFields" class="field-group skeleton-field-group">
+              <div class="skeleton-bar skeleton-label"></div>
+              <div class="skeleton-bar skeleton-input"></div>
             </div>
           </div>
+        </div>
 
-          <!-- Real fields once metadata is ready -->
-          <div *ngIf="!isLoading()" class="form-section">
-            <div class="fields-grid">
-              <div *ngFor="let field of formFields; trackBy: trackByFieldName" class="field-group">
-                <label [for]="field.fieldName">
-                  {{ field.description }}
-                  <span *ngIf="field.isMandatory" class="mandatory">*</span>
-                  <span class="max-value" *ngIf="field.fieldLength">
-                    (Max: {{ field.fieldLength }})
-                  </span>
-                </label>
+        <!-- Grouped field panels — three-level hierarchy: blocks -> subjects -> fields -->
+        @if (!isLoading()) {
+          @for (block of formBlocks; track block.blockName; let blockIdx = $index) {
+            <!-- Main Block Panel -->
+            <p-panel
+              [header]="block.blockName"
+              [toggleable]="true"
+              [collapsed]="blockIdx !== 0"
+              styleClass="main-block-panel"
+            >
+              @if (blockIdx === 0) {
+                <!-- First block renders immediately -->
+                @for (subject of block.subjects; track subject.label; let subjectIdx = $index) {
+                  <!-- Subject Panel (Child Header) -->
+                  <p-panel
+                    [header]="subject.label"
+                    [toggleable]="true"
+                    [collapsed]="false"
+                    styleClass="subject-panel"
+                  >
+                    <ng-container *ngTemplateOutlet="fieldGrid; context: { vms: subject.viewModels }"></ng-container>
+                  </p-panel>
+                }
+              } @else {
+                @defer (on idle) {
+                  @for (subject of block.subjects; track subject.label) {
+                    <!-- Subject Panel (Child Header) -->
+                    <p-panel
+                      [header]="subject.label"
+                      [toggleable]="true"
+                      [collapsed]="false"
+                      styleClass="subject-panel"
+                    >
+                      <ng-container *ngTemplateOutlet="fieldGrid; context: { vms: subject.viewModels }"></ng-container>
+                    </p-panel>
+                  }
+                } @placeholder {
+                  <div class="block-placeholder">
+                    <div class="skeleton-bar" style="width:60%;height:14px;margin-bottom:8px;border-radius:4px;background:#e2e8f0;"></div>
+                    <div class="skeleton-bar" style="width:40%;height:14px;border-radius:4px;background:#e2e8f0;"></div>
+                  </div>
+                }
+              }
+            </p-panel>
+          }
+        }
 
-                <!-- Text Input -->
-                <input 
-                  *ngIf="fieldTypeMap.get(field.fieldName) === 'text'"
-                  pInputText
-                  [id]="field.fieldName"
-                  [type]="getInputType(field.fieldName)"
-                  [formControlName]="field.fieldName"
-                  [maxLength]="getMaxLength(field)"
-                  [pTooltip]="field.description"
-                  tooltipPosition="top"
-                />
+        <!-- Reusable field grid template -->
+        <ng-template #fieldGrid let-vms="vms">
+          <div class="fields-grid">
+            <div *ngFor="let vm of vms; trackBy: trackByViewModel" class="field-group">
+              <label [for]="vm.metadata.fieldName">
+                {{ vm.metadata.description }}
+                <span *ngIf="vm.metadata.isMandatory" class="mandatory">*</span>
+                <span class="max-value" *ngIf="vm.metadata.fieldLength">
+                  (Max: {{ vm.metadata.fieldLength }})
+                </span>
+              </label>
 
-                <!-- Number Input -->
-                <p-inputNumber 
-                  *ngIf="fieldTypeMap.get(field.fieldName) === 'number'"
-                  [id]="field.fieldName"
-                  [formControlName]="field.fieldName"
-                  [max]="999999999"
-                  [minFractionDigits]="0"
-                  [maxFractionDigits]="getDecimalPlaces(field)"
-                  [pTooltip]="field.description"
-                  tooltipPosition="top"
-                ></p-inputNumber>
+              <!-- Text Input -->
+              <input
+                *ngIf="vm.type === 'text'"
+                pInputText
+                [id]="vm.metadata.fieldName"
+                type="text"
+                [formControlName]="vm.metadata.fieldName"
+                [maxLength]="vm.maxLength"
+                [pTooltip]="vm.metadata.description"
+                tooltipPosition="top"
+              />
 
-                <!-- Date Picker -->
-                <p-datepicker 
-                  *ngIf="fieldTypeMap.get(field.fieldName) === 'date'"
-                  [id]="field.fieldName"
-                  [formControlName]="field.fieldName"
-                  dateFormat="yy-mm-dd"
-                  [showIcon]="true"
-                  [pTooltip]="field.description"
-                  tooltipPosition="top"
-                ></p-datepicker>
+              <!-- Number Input -->
+              <p-inputNumber
+                *ngIf="vm.type === 'number'"
+                [id]="vm.metadata.fieldName"
+                [formControlName]="vm.metadata.fieldName"
+                [max]="999999999"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="vm.decimals"
+                [pTooltip]="vm.metadata.description"
+                tooltipPosition="top"
+              ></p-inputNumber>
 
-                <!-- Dropdown -->
-                <p-select 
-                  *ngIf="fieldTypeMap.get(field.fieldName) === 'dropdown'"
-                  [id]="field.fieldName"
-                  [formControlName]="field.fieldName"
-                  [options]="getFieldOptions(field.fieldName)"
-                  optionLabel="label"
-                  optionValue="value"
-                  [placeholder]="'Select'"
-                  [pTooltip]="field.description"
-                  tooltipPosition="top"
-                ></p-select>
+              <!-- Date Picker -->
+              <p-datepicker
+                *ngIf="vm.type === 'date'"
+                [id]="vm.metadata.fieldName"
+                [formControlName]="vm.metadata.fieldName"
+                dateFormat="yy-mm-dd"
+                [showIcon]="true"
+                [pTooltip]="vm.metadata.description"
+                tooltipPosition="top"
+              ></p-datepicker>
 
-                <!-- Error Message -->
-                <small *ngIf="hasError(field.fieldName)" class="error-text">
-                  {{ getErrorMessage(field.fieldName) }}
-                </small>
-              </div>
+              <!-- Dropdown -->
+              <p-select
+                *ngIf="vm.type === 'dropdown'"
+                [id]="vm.metadata.fieldName"
+                [formControlName]="vm.metadata.fieldName"
+                [options]="vm.options"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select"
+                [pTooltip]="vm.metadata.description"
+                tooltipPosition="top"
+              ></p-select>
+
+              <!-- Error Message -->
+              <small *ngIf="hasError(vm.metadata.fieldName)" class="error-text">
+                {{ getErrorMessage(vm.metadata.fieldName) }}
+              </small>
             </div>
           </div>
-        </p-panel>
+        </ng-template>
 
         <!-- Action Buttons -->
         <div class="form-actions">

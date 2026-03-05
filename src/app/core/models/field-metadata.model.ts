@@ -74,6 +74,33 @@ export interface FieldMetadata {
   checkTableValues: CheckTableValue[] | null;
   passableValues: PassableValue[] | null;
   displayOrder?: number;
+  subject?: string; // Subject/child header within the UI assignment block
+  uiAssignmentBlock?: string; // Main block for form organization
+}
+
+/**
+ * FormSubject represents a child header within a main block
+ * Contains multiple fields grouped together
+ */
+export interface FormSubject {
+  subject: string;
+  fields: FieldMetadata[];
+}
+
+/**
+ * FormBlock represents a main block in the form
+ * Contains multiple subjects (child headers)
+ */
+export interface FormBlock {
+  uiAssignmentBlock: string;
+  subjects: FormSubject[];
+}
+
+/**
+ * Structured metadata response from API
+ */
+export interface StructuredMetadataResponse {
+  data: FormBlock[];
 }
 
 export interface FieldOption {

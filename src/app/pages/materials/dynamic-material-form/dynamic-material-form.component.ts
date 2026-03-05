@@ -12,7 +12,6 @@ import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -21,6 +20,31 @@ import { MetadataService } from '../../../core/services/metadata.service';
 import { FieldMetadata, FieldOption, MaterialSubmission, DataType, UIControlType } from '../../../core/models/field-metadata.model';
 import { DynamicValidators } from '../../../shared/validators/dynamic-validators';
 import { ApiResponse } from '../../../core/models/api-response.model';
+
+/**
+ * Pre-computed view model for each form field.
+ * Built ONCE when metadata loads — all references are stable.
+ * Eliminates all template method calls that could return new references each CD cycle.
+ */
+interface FieldViewModel {
+  metadata: FieldMetadata;
+  type: 'text' | 'number' | 'date' | 'dropdown';
+  options: FieldOption[];   // stable array — never a new [] reference
+  maxLength: number;
+  decimals: number;
+}
+
+/** A group of fields rendered together in one collapsible panel (Subject level) */
+interface FieldGroup {
+  label: string;
+  viewModels: FieldViewModel[];
+}
+
+/** A main block containing multiple subjects (uiAssignmentBlock level) */
+interface FormBlockGroup {
+  blockName: string;
+  subjects: FieldGroup[];
+}
 
 /**
  * Dynamic Material Form Component
@@ -89,6 +113,12 @@ export class DynamicMaterialFormComponent implements OnInit {
   // All other fields (excluding material number) - plain property, set ONCE, never recomputed
   formFields: FieldMetadata[] = [];
 
+  // Pre-computed view models for template - zero method calls in CD hot path
+  formFieldViewModels: FieldViewModel[] = [];
+  // Main blocks containing subjects with fields — three-level hierarchy
+  formBlocks: FormBlockGroup[] = [];
+  private readonly EMPTY_OPTIONS: FieldOption[] = [];
+
   // Enum references for template
   readonly DataType = DataType;
   readonly UIControlType = UIControlType;
@@ -117,7 +147,7 @@ export class DynamicMaterialFormComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.metadataService.getFieldMetadata().subscribe({
+    this.metadataService.getFieldMetadata(true).subscribe({
       next: (metadata) => {
         this.fields.set(metadata);
         // Separate material number field
@@ -134,6 +164,16 @@ export class DynamicMaterialFormComponent implements OnInit {
         this.buildForm(metadata);
         // Precompute stable maps BEFORE showing form - avoids CD loop
         this.buildFieldMaps(metadata);
+        // Build view models ONCE - eliminates ALL method calls from the template
+        this.formFieldViewModels = this.formFields.map(field => ({
+          metadata: field,
+          type: this.fieldTypeMap.get(field.fieldName) ?? 'text',
+          options: this.fieldOptionsMap.get(field.fieldName) ?? this.EMPTY_OPTIONS,
+          maxLength: field.fieldLength > 0 ? field.fieldLength : 999,
+          decimals: field.decimals || 0
+        }));
+        // Build three-level hierarchy: blocks -> subjects -> fields
+        this.formBlocks = this.buildFormBlocks(this.formFieldViewModels);
 
         // ✅ SOLUTION #1: Unblock the form immediately after metadata + buildForm
         // Don't wait for material number generation!
@@ -434,9 +474,68 @@ export class DynamicMaterialFormComponent implements OnInit {
   }
 
   /**
+   * Build three-level form hierarchy: Main Blocks -> Subjects -> Fields
+   * Groups view models by uiAssignmentBlock (main block) and subject (child header)
+   */
+  private buildFormBlocks(viewModels: FieldViewModel[]): FormBlockGroup[] {
+    // Group by main block (uiAssignmentBlock)
+    const blockMap = new Map<string, Map<string, FieldViewModel[]>>();
+
+    for (const vm of viewModels) {
+      const blockName = vm.metadata.uiAssignmentBlock || 'General';
+      const subjectName = vm.metadata.subject || 'Other';
+      
+      if (!blockMap.has(blockName)) {
+        blockMap.set(blockName, new Map<string, FieldViewModel[]>());
+      }
+      
+      const subjectMap = blockMap.get(blockName)!;
+      if (!subjectMap.has(subjectName)) {
+        subjectMap.set(subjectName, []);
+      }
+      
+      subjectMap.get(subjectName)!.push(vm);
+    }
+
+    // Convert maps to structured array
+    const formBlocks: FormBlockGroup[] = [];
+    
+    // Sort blocks alphabetically (or apply custom priority if needed)
+    const sortedBlocks = Array.from(blockMap.entries()).sort(([a], [b]) => a.localeCompare(b));
+    
+    for (const [blockName, subjectMap] of sortedBlocks) {
+      const subjects: FieldGroup[] = [];
+      
+      // Sort subjects alphabetically within each block
+      const sortedSubjects = Array.from(subjectMap.entries()).sort(([a], [b]) => a.localeCompare(b));
+      
+      for (const [subjectName, vms] of sortedSubjects) {
+        subjects.push({
+          label: subjectName,
+          viewModels: vms
+        });
+      }
+      
+      formBlocks.push({
+        blockName,
+        subjects
+      });
+    }
+
+    return formBlocks;
+  }
+
+  /**
    * Track by function for ngFor performance
    */
   trackByFieldName(index: number, field: FieldMetadata): string {
     return field.fieldName;
+  }
+
+  /**
+   * Track by for FieldViewModel ngFor — uses the underlying fieldName
+   */
+  trackByViewModel(index: number, vm: FieldViewModel): string {
+    return vm.metadata.fieldName;
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map } from 'rxjs';
-import { FieldMetadata } from '../models/field-metadata.model';
+import { FieldMetadata, FormBlock } from '../models/field-metadata.model';
 import { ApiResponse } from '../models/api-response.model';
 import { environment } from '../../../environments/environment';
 
@@ -23,15 +23,17 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root'
 })
 export class MetadataService {
-  private readonly apiUrl = `${environment.apiUrl}/field-metadata/with-values/`;
+  private readonly apiUrl = `${environment.apiUrl}/field-metadata/with-values`;
   
   // Signal-based state management
   private metadataCache = signal<FieldMetadata[]>([]);
+  private structuredMetadataCache = signal<FormBlock[]>([]);
   private loadingState = signal<boolean>(false);
   private errorState = signal<string | null>(null);
 
   // Public read-only signals
   readonly metadata = this.metadataCache.asReadonly();
+  readonly structuredMetadata = this.structuredMetadataCache.asReadonly();
   readonly isLoading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
 
@@ -39,36 +41,101 @@ export class MetadataService {
 
   constructor() {}
 
-  /**
-   * Fetch field metadata from API
-   * @returns Observable of field metadata array
+  /**param structured If true, fetches structured metadata with blocks and subjects
+   * @returns Observable of field metadata array (flattened from structured format)
    */
-  getFieldMetadata(): Observable<FieldMetadata[]> {
+  getFieldMetadata(structured = false): Observable<FieldMetadata[]> {
     this.loadingState.set(true);
     this.errorState.set(null);
 
-    return this.http.get<ApiResponse<FieldMetadata[]>>(this.apiUrl).pipe(
-      map(response => response.data),
-      tap({
-        next: (data) => {
-          // Sort by display order if available, otherwise by field name
-          const sortedData = data.sort((a, b) => {
-            if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
-              return a.displayOrder - b.displayOrder;
-            }
-            return a.fieldName.localeCompare(b.fieldName);
+    const url = `${this.apiUrl}?structured=${structured}`;
+    
+    if (structured) {
+      // Fetch structured format and flatten it
+      return this.http.get<ApiResponse<FormBlock[]>>(url).pipe(
+        map(response => {
+          // Cache the structured format
+          this.structuredMetadataCache.set(response.data);
+          // Flatten the structured data
+          return this.flattenStructuredMetadata(response.data);
+        }),
+        tap({
+          next: (flattenedData) => {
+            // Sort by display order if available, otherwise by field name
+            const sortedData = flattenedData.sort((a, b) => {
+              if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
+                return a.displayOrder - b.displayOrder;
+              }
+              return a.fieldName.localeCompare(b.fieldName);
+            });
+            
+            this.metadataCache.set(sortedData);
+            this.loadingState.set(false);
+          },
+          error: (error) => {
+            this.errorState.set(error.message || 'Failed to load metadata');
+            this.loadingState.set(false);
+            this.metadataCache.set([]);
+            this.structuredMetadataCache.set([]);
+          }
+        })
+      );
+    } else {
+      // Legacy flat format
+      return this.http.get<ApiResponse<FieldMetadata[]>>(url).pipe(
+        map(response => response.data),
+        tap({
+          next: (data) => {
+            // Sort by display order if available, otherwise by field name
+            const sortedData = data.sort((a, b) => {
+              if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
+                return a.displayOrder - b.displayOrder;
+              }
+              return a.fieldName.localeCompare(b.fieldName);
+            });
+            
+            this.metadataCache.set(sortedData);
+            this.loadingState.set(false);
+          },
+          error: (error) => {
+            this.errorState.set(error.message || 'Failed to load metadata');
+            this.loadingState.set(false);
+            this.metadataCache.set([]);
+          }
+        })
+      );
+    }
+  }
+
+  /**
+   * Flatten structured metadata (blocks -> subjects -> fields) into a single array
+   * Each field is enriched with uiAssignmentBlock and subject information
+   */
+  private flattenStructuredMetadata(blocks: FormBlock[]): FieldMetadata[] {
+    const flattenedFields: FieldMetadata[] = [];
+    
+    for (const block of blocks) {
+      for (const subject of block.subjects) {
+        for (const field of subject.fields) {
+          // Enrich each field with hierarchy information
+          flattenedFields.push({
+            ...field,
+            uiAssignmentBlock: block.uiAssignmentBlock,
+            subject: subject.subject
           });
-          
-          this.metadataCache.set(sortedData);
-          this.loadingState.set(false);
-        },
-        error: (error) => {
-          this.errorState.set(error.message || 'Failed to load metadata');
-          this.loadingState.set(false);
-          this.metadataCache.set([]);
         }
-      })
-    );
+      }
+    }
+    
+    return flattenedFields;
+  }
+
+  /**
+   * Get structured metadata (blocks -> subjects -> fields)
+   * @returns Current structured metadata from cache
+   */
+  getStructuredMetadata(): FormBlock[] {
+    return this.structuredMetadataCache();
   }
 
   /**
