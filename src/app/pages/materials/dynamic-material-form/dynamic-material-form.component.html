@@ -73,7 +73,7 @@
           <!-- Real fields once metadata is ready -->
           <div *ngIf="!isLoading()" class="form-section">
             <div class="fields-grid">
-              <div *ngFor="let field of formFields(); trackBy: trackByFieldName" class="field-group">
+              <div *ngFor="let field of formFields; trackBy: trackByFieldName" class="field-group">
                 <label [for]="field.fieldName">
                   {{ field.description }}
                   <span *ngIf="field.isMandatory" class="mandatory">*</span>
@@ -84,10 +84,10 @@
 
                 <!-- Text Input -->
                 <input 
-                  *ngIf="!isDropdownField(field) && !isDateField(field) && !isNumberField(field)"
+                  *ngIf="fieldTypeMap.get(field.fieldName) === 'text'"
                   pInputText
                   [id]="field.fieldName"
-                  [type]="getInputType(field)"
+                  [type]="getInputType(field.fieldName)"
                   [formControlName]="field.fieldName"
                   [maxLength]="getMaxLength(field)"
                   [pTooltip]="field.description"
@@ -96,7 +96,7 @@
 
                 <!-- Number Input -->
                 <p-inputNumber 
-                  *ngIf="isNumberField(field)"
+                  *ngIf="fieldTypeMap.get(field.fieldName) === 'number'"
                   [id]="field.fieldName"
                   [formControlName]="field.fieldName"
                   [max]="999999999"
@@ -108,7 +108,7 @@
 
                 <!-- Date Picker -->
                 <p-datepicker 
-                  *ngIf="isDateField(field)"
+                  *ngIf="fieldTypeMap.get(field.fieldName) === 'date'"
                   [id]="field.fieldName"
                   [formControlName]="field.fieldName"
                   dateFormat="yy-mm-dd"
@@ -119,10 +119,10 @@
 
                 <!-- Dropdown -->
                 <p-select 
-                  *ngIf="isDropdownField(field)"
+                  *ngIf="fieldTypeMap.get(field.fieldName) === 'dropdown'"
                   [id]="field.fieldName"
                   [formControlName]="field.fieldName"
-                  [options]="getFieldOptions(field)"
+                  [options]="getFieldOptions(field.fieldName)"
                   optionLabel="label"
                   optionValue="value"
                   [placeholder]="'Select'"

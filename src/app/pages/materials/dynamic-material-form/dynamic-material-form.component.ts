@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -18,7 +18,6 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 import { MetadataService } from '../../../core/services/metadata.service';
-import { CheckTableService } from '../../../core/services/check-table.service';
 import { FieldMetadata, FieldOption, MaterialSubmission, DataType, UIControlType } from '../../../core/models/field-metadata.model';
 import { DynamicValidators } from '../../../shared/validators/dynamic-validators';
 import { ApiResponse } from '../../../core/models/api-response.model';
@@ -60,7 +59,6 @@ export class DynamicMaterialFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private metadataService = inject(MetadataService);
-  private checkTableService = inject(CheckTableService);
   private messageService = inject(MessageService);
 
   // Signals for reactive state
@@ -75,6 +73,10 @@ export class DynamicMaterialFormComponent implements OnInit {
   // Skeleton placeholder count while metadata loads
   readonly skeletonFields = Array(10).fill(0);
 
+  // Precomputed maps - built ONCE when metadata loads, stable references for template
+  fieldOptionsMap = new Map<string, FieldOption[]>();
+  fieldTypeMap = new Map<string, 'text' | 'number' | 'date' | 'dropdown'>();
+
   // Form group
   materialForm!: FormGroup;
 
@@ -84,17 +86,8 @@ export class DynamicMaterialFormComponent implements OnInit {
   // Track if initialization has started to prevent multiple calls
   private initializationStarted = false;
 
-  // All other fields (excluding material number)
-  formFields = computed(() => {
-    return this.fields()
-      .filter(f => f.fieldName !== 'MATNR')
-      .sort((a, b) => {
-        if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
-          return a.displayOrder - b.displayOrder;
-        }
-        return a.fieldName.localeCompare(b.fieldName);
-      });
-  });
+  // All other fields (excluding material number) - plain property, set ONCE, never recomputed
+  formFields: FieldMetadata[] = [];
 
   // Enum references for template
   readonly DataType = DataType;
@@ -129,7 +122,18 @@ export class DynamicMaterialFormComponent implements OnInit {
         this.fields.set(metadata);
         // Separate material number field
         this.materialNumberField = metadata.find(f => f.fieldName === 'MATNR') || null;
+        // Set formFields ONCE as a plain stable array - never changes after this
+        this.formFields = metadata
+          .filter(f => f.fieldName !== 'MATNR')
+          .sort((a, b) => {
+            if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
+              return a.displayOrder - b.displayOrder;
+            }
+            return a.fieldName.localeCompare(b.fieldName);
+          });
         this.buildForm(metadata);
+        // Precompute stable maps BEFORE showing form - avoids CD loop
+        this.buildFieldMaps(metadata);
 
         // ✅ SOLUTION #1: Unblock the form immediately after metadata + buildForm
         // Don't wait for material number generation!
@@ -149,16 +153,60 @@ export class DynamicMaterialFormComponent implements OnInit {
             console.warn('⚠️ Material number failed:', err);
           }
         });
-
-        // Fire check tables in background (non-blocking)
-        this.checkTableService.fetchCheckTables().subscribe({
-          next: () => console.log('✅ Check tables loaded in background'),
-          error: (err: any) => console.warn('⚠️ Check tables failed to load:', err)
-        });
+        // Note: fetchCheckTables() is not called here — check tables are loaded by app.menu.ts.
       },
       error: (err) => {
         this.error.set(err.message || 'Failed to load form metadata');
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  /**
+   * Precompute field options and types into stable Maps.
+   * Called once when metadata loads - prevents new array refs on every CD cycle.
+   */
+  private buildFieldMaps(metadata: FieldMetadata[]): void {
+    this.fieldOptionsMap.clear();
+    this.fieldTypeMap.clear();
+
+    metadata.forEach(field => {
+      // Determine field type
+      const isDropdown = (field.checkTableValues != null && field.checkTableValues.length > 0) ||
+                         (field.passableValues != null && field.passableValues.length > 0);
+      const isNumber = field.uiControlType === UIControlType.NUMBER ||
+                       field.dataType === DataType.NUMC ||
+                       field.dataType === DataType.DEC ||
+                       field.dataType === DataType.QUAN ||
+                       field.dataType === DataType.INT2;
+      const isDate = field.uiControlType === UIControlType.DATE_PICKER ||
+                     field.dataType === DataType.DATS;
+
+      let type: 'text' | 'number' | 'date' | 'dropdown';
+      if (isDropdown) type = 'dropdown';
+      else if (isDate) type = 'date';
+      else if (isNumber) type = 'number';
+      else type = 'text';
+
+      this.fieldTypeMap.set(field.fieldName, type);
+
+      // Build stable options array (never recreated)
+      if (isDropdown) {
+        if (field.checkTableValues && field.checkTableValues.length > 0) {
+          this.fieldOptionsMap.set(field.fieldName,
+            field.checkTableValues.map(item => ({
+              value: item.keyValue,
+              label: `${item.keyValue} - ${item.description}`
+            }))
+          );
+        } else if (field.passableValues && field.passableValues.length > 0) {
+          this.fieldOptionsMap.set(field.fieldName,
+            field.passableValues.map(item => ({
+              value: item.value,
+              label: item.displayValue
+            }))
+          );
+        }
       }
     });
   }
@@ -217,63 +265,40 @@ export class DynamicMaterialFormComponent implements OnInit {
   }
 
   /**
-   * Get dropdown options for a field
+   * Get dropdown options for a field - reads from precomputed stable map
    */
-  getFieldOptions(field: FieldMetadata): FieldOption[] {
-    if (field.checkTableValues && field.checkTableValues.length > 0) {
-      return field.checkTableValues.map(item => ({
-        value: item.keyValue,
-        label: `${item.keyValue} - ${item.description}`
-      }));
-    }
-
-    if (field.passableValues && field.passableValues.length > 0) {
-      return field.passableValues.map(item => ({
-        value: item.value,
-        label: item.displayValue
-      }));
-    }
-
-    return [];
+  getFieldOptions(fieldName: string): FieldOption[] {
+    return this.fieldOptionsMap.get(fieldName) ?? [];
   }
 
   /**
    * Check if field should be rendered as dropdown
    */
-  isDropdownField(field: FieldMetadata): boolean {
-    return (field.checkTableValues !== null && field.checkTableValues.length > 0) ||
-           (field.passableValues !== null && field.passableValues.length > 0);
+  isDropdownField(fieldName: string): boolean {
+    return this.fieldTypeMap.get(fieldName) === 'dropdown';
   }
 
   /**
    * Check if field should be rendered as number input
    */
-  isNumberField(field: FieldMetadata): boolean {
-    return field.uiControlType === UIControlType.NUMBER ||
-           field.dataType === DataType.NUMC ||
-           field.dataType === DataType.DEC ||
-           field.dataType === DataType.QUAN ||
-           field.dataType === DataType.INT2;
+  isNumberField(fieldName: string): boolean {
+    return this.fieldTypeMap.get(fieldName) === 'number';
   }
 
   /**
    * Check if field should be rendered as date picker
    */
-  isDateField(field: FieldMetadata): boolean {
-    return field.uiControlType === UIControlType.DATE_PICKER ||
-           field.dataType === DataType.DATS;
+  isDateField(fieldName: string): boolean {
+    return this.fieldTypeMap.get(fieldName) === 'date';
   }
 
   /**
    * Get input type for text fields
    */
-  getInputType(field: FieldMetadata): string {
-    if (this.isNumberField(field)) {
-      return 'number';
-    }
-    if (this.isDateField(field)) {
-      return 'date';
-    }
+  getInputType(fieldName: string): string {
+    const type = this.fieldTypeMap.get(fieldName);
+    if (type === 'number') return 'number';
+    if (type === 'date') return 'date';
     return 'text';
   }
 
@@ -344,16 +369,6 @@ export class DynamicMaterialFormComponent implements OnInit {
         this.generateMaterialNumber().subscribe({
           next: () => {
             console.log('✅ New material number generated');
-            
-            // Refresh check tables in background
-            this.checkTableService.refresh().subscribe({
-              next: () => {
-                console.log('✅ Check tables refreshed');
-              },
-              error: (err: any) => {
-                console.warn('⚠️ Check tables refresh failed:', err);
-              }
-            });
           },
           error: (err: any) => {
             console.error('❌ Failed to generate new material number:', err);

@@ -21,7 +21,6 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { MetadataService } from '../../../core/services/metadata.service';
-import { CheckTableService } from '../../../core/services/check-table.service';
 import { FieldMetadata } from '../../../core/models/field-metadata.model';
 import { FileImportPanelComponent } from '../../../shared/components/file-import-panel/file-import-panel.component';
 
@@ -104,7 +103,6 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
 
   constructor(
     private metadataService: MetadataService,
-    private checkTableService: CheckTableService,
     private http: HttpClient,
     private messageService: MessageService
   ) {
@@ -516,15 +514,7 @@ export class MaterialConfigurationComponent implements OnInit, OnDestroy {
           // Load updated metadata
           this.loadMetadata();
 
-          // Refresh check tables dropdown to sync with new data
-          this.checkTableService.refresh().subscribe({
-            next: () => {
-              console.log('✅ Check tables refreshed successfully after CSV import');
-            },
-            error: (error: any) => {
-              console.error('❌ Failed to refresh check tables:', error);
-            }
-          });
+
         }
 
         this.selectedCsvFile.set(null);
