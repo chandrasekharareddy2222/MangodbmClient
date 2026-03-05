@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -117,7 +117,12 @@ export class DynamicMaterialFormComponent implements OnInit {
   formFieldViewModels: FieldViewModel[] = [];
   // Main blocks containing subjects with fields — three-level hierarchy
   formBlocks: FormBlockGroup[] = [];
+  // Visible blocks for progressive rendering with infinite scroll
+  visibleBlocksCount = signal<number>(5); // Start with first 5 blocks
+  readonly BLOCKS_PER_LOAD = 5; // Load 5 more blocks at a time
+  isLoadingMoreBlocks = signal<boolean>(false); // Track if we're currently loading more
   private readonly EMPTY_OPTIONS: FieldOption[] = [];
+  private loadMoreThrottleTimer: any = null;
 
   // Enum references for template
   readonly DataType = DataType;
@@ -523,6 +528,84 @@ export class DynamicMaterialFormComponent implements OnInit {
     }
 
     return formBlocks;
+  }
+
+  /**
+   * Get visible blocks based on current count
+   */
+  getVisibleBlocks(): FormBlockGroup[] {
+    return this.formBlocks.slice(0, this.visibleBlocksCount());
+  }
+
+  /**
+   * Check if there are more blocks to load
+   */
+  hasMoreBlocks(): boolean {
+    return this.visibleBlocksCount() < this.formBlocks.length;
+  }
+
+  /**
+   * Load more blocks (progressive rendering) - called by infinite scroll
+   */
+  loadMoreBlocks(): void {
+    if (this.isLoadingMoreBlocks() || !this.hasMoreBlocks()) {
+      return;
+    }
+
+    this.isLoadingMoreBlocks.set(true);
+
+    // Simulate brief loading delay for smooth UX
+    setTimeout(() => {
+      const newCount = Math.min(
+        this.visibleBlocksCount() + this.BLOCKS_PER_LOAD,
+        this.formBlocks.length
+      );
+      this.visibleBlocksCount.set(newCount);
+      this.isLoadingMoreBlocks.set(false);
+    }, 100);
+  }
+
+  /**
+   * Scroll event listener for infinite scroll
+   * Loads more blocks when user scrolls near bottom
+   */
+  @HostListener('window:scroll')
+  onScroll(): void {
+    if (this.isLoading() || this.isLoadingMoreBlocks() || !this.hasMoreBlocks()) {
+      return;
+    }
+
+    // Throttle scroll events
+    if (this.loadMoreThrottleTimer) {
+      return;
+    }
+
+    this.loadMoreThrottleTimer = setTimeout(() => {
+      this.loadMoreThrottleTimer = null;
+    }, 200);
+
+    // Check if user scrolled near bottom (within 300px)
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const documentHeight = document.documentElement.scrollHeight;
+    const threshold = 300;
+
+    if (scrollPosition >= documentHeight - threshold) {
+      this.loadMoreBlocks();
+    }
+  }
+
+  /**
+   * Get total blocks count
+   */
+  getTotalBlocksCount(): number {
+    return this.formBlocks.length;
+  }
+
+  /**
+   * Track by function for form blocks
+   */
+  trackByBlockName(index: number, block: FormBlockGroup): string {
+    return block.blockName;
   }
 
   /**

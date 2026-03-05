@@ -63,8 +63,9 @@
         </div>
 
         <!-- Grouped field panels — three-level hierarchy: blocks -> subjects -> fields -->
+        <!-- Progressive rendering: only render visible blocks to prevent UI freeze -->
         @if (!isLoading()) {
-          @for (block of formBlocks; track block.blockName; let blockIdx = $index) {
+          @for (block of getVisibleBlocks(); track trackByBlockName($index, block); let blockIdx = $index) {
             <!-- Main Block Panel -->
             <p-panel
               [header]="block.blockName"
@@ -73,22 +74,10 @@
               styleClass="main-block-panel"
             >
               @if (blockIdx === 0) {
-                <!-- First block renders immediately -->
+                <!-- First block: render first 2 subjects immediately, defer rest -->
                 @for (subject of block.subjects; track subject.label; let subjectIdx = $index) {
-                  <!-- Subject Panel (Child Header) -->
-                  <p-panel
-                    [header]="subject.label"
-                    [toggleable]="true"
-                    [collapsed]="false"
-                    styleClass="subject-panel"
-                  >
-                    <ng-container *ngTemplateOutlet="fieldGrid; context: { vms: subject.viewModels }"></ng-container>
-                  </p-panel>
-                }
-              } @else {
-                @defer (on idle) {
-                  @for (subject of block.subjects; track subject.label) {
-                    <!-- Subject Panel (Child Header) -->
+                  @if (subjectIdx < 2) {
+                    <!-- First 2 subjects render immediately -->
                     <p-panel
                       [header]="subject.label"
                       [toggleable]="true"
@@ -97,15 +86,86 @@
                     >
                       <ng-container *ngTemplateOutlet="fieldGrid; context: { vms: subject.viewModels }"></ng-container>
                     </p-panel>
+                  } @else {
+                    <!-- Remaining subjects lazy load -->
+                    @defer (on idle) {
+                      <p-panel
+                        [header]="subject.label"
+                        [toggleable]="true"
+                        [collapsed]="false"
+                        styleClass="subject-panel"
+                      >
+                        <ng-container *ngTemplateOutlet="fieldGrid; context: { vms: subject.viewModels }"></ng-container>
+                      </p-panel>
+                    } @placeholder {
+                      <div class="subject-loading">
+                        <div class="skeleton-bar" style="width:50%;height:12px;margin:8px 0;border-radius:3px;background:#e5e7eb;"></div>
+                      </div>
+                    }
+                  }
+                }
+              } @else {
+                <!-- Other blocks: defer until expanded (on timer after short delay) -->
+                @defer (on timer(100ms); prefetch on idle) {
+                  @for (subject of block.subjects; track subject.label; let subjectIdx = $index) {
+                    @if (subjectIdx < 1) {
+                      <!-- First subject renders when block loads -->
+                      <p-panel
+                        [header]="subject.label"
+                        [toggleable]="true"
+                        [collapsed]="false"
+                        styleClass="subject-panel"
+                      >
+                        <ng-container *ngTemplateOutlet="fieldGrid; context: { vms: subject.viewModels }"></ng-container>
+                      </p-panel>
+                    } @else {
+                      <!-- Other subjects lazy load -->
+                      @defer (on idle) {
+                        <p-panel
+                          [header]="subject.label"
+                          [toggleable]="true"
+                          [collapsed]="false"
+                          styleClass="subject-panel"
+                        >
+                          <ng-container *ngTemplateOutlet="fieldGrid; context: { vms: subject.viewModels }"></ng-container>
+                        </p-panel>
+                      } @placeholder {
+                        <div class="subject-loading">
+                          <div class="skeleton-bar" style="width:50%;height:12px;margin:8px 0;border-radius:3px;background:#e5e7eb;"></div>
+                        </div>
+                      }
+                    }
                   }
                 } @placeholder {
                   <div class="block-placeholder">
                     <div class="skeleton-bar" style="width:60%;height:14px;margin-bottom:8px;border-radius:4px;background:#e2e8f0;"></div>
                     <div class="skeleton-bar" style="width:40%;height:14px;border-radius:4px;background:#e2e8f0;"></div>
                   </div>
+                } @loading (minimum 100ms) {
+                  <div class="block-loading">
+                    <div class="skeleton-bar" style="width:70%;height:14px;margin-bottom:8px;border-radius:4px;background:#e2e8f0;"></div>
+                  </div>
                 }
               }
             </p-panel>
+          }
+
+          <!-- Loading indicator at bottom when more blocks are being loaded -->
+          @if (isLoadingMoreBlocks()) {
+            <div class="loading-more-container">
+              <div class="loading-spinner">
+                <i class="pi pi-spin pi-spinner"></i>
+                <span>Loading more blocks...</span>
+              </div>
+            </div>
+          }
+
+          <!-- End of blocks indicator -->
+          @if (!hasMoreBlocks() && !isLoadingMoreBlocks() && visibleBlocksCount() > 0) {
+            <div class="end-of-blocks">
+              <i class="pi pi-check-circle"></i>
+              <span>All blocks loaded ({{ getTotalBlocksCount() }} total)</span>
+            </div>
           }
         }
 
