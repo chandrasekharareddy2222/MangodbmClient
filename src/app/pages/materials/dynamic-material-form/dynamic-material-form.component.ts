@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -48,7 +48,6 @@ import { ApiResponse } from '../../../core/models/api-response.model';
     DatePickerModule,
     ButtonModule,
     MessageModule,
-    ProgressSpinnerModule,
     TooltipModule,
     ToastModule
   ],
@@ -63,14 +62,18 @@ export class DynamicMaterialFormComponent implements OnInit {
   private metadataService = inject(MetadataService);
   private checkTableService = inject(CheckTableService);
   private messageService = inject(MessageService);
-  private cdr = inject(ChangeDetectorRef);
 
   // Signals for reactive state
   fields = signal<FieldMetadata[]>([]);
   isLoading = signal<boolean>(false);
+  metadataLoaded = signal<boolean>(false);
+  isGeneratingMatnr = signal<boolean>(true);
   error = signal<string | null>(null);
   isSubmitting = signal<boolean>(false);
   submitSuccess = signal<boolean>(false);
+
+  // Skeleton placeholder count while metadata loads
+  readonly skeletonFields = Array(10).fill(0);
 
   // Form group
   materialForm!: FormGroup;
@@ -124,43 +127,33 @@ export class DynamicMaterialFormComponent implements OnInit {
     this.metadataService.getFieldMetadata().subscribe({
       next: (metadata) => {
         this.fields.set(metadata);
-        
         // Separate material number field
         this.materialNumberField = metadata.find(f => f.fieldName === 'MATNR') || null;
-        
         this.buildForm(metadata);
-        
-        // Generate material number - form will show once this is done
+
+        // ✅ SOLUTION #1: Unblock the form immediately after metadata + buildForm
+        // Don't wait for material number generation!
+        this.isLoading.set(false);
+        this.metadataLoaded.set(true);
+        console.log('✅ Form shell visible - launching background tasks');
+
+        // Fire material number generation in background (non-blocking)
+        this.isGeneratingMatnr.set(true);
         this.generateMaterialNumber().subscribe({
           next: () => {
-            this.isLoading.set(false);
-            console.log('✅ Form loaded: metadata + material number ready');
-            
-            // Load check tables in background after form is ready
-            this.checkTableService.fetchCheckTables().subscribe({
-              next: () => {
-                console.log('✅ Check tables loaded in background');
-              },
-              error: (err: any) => {
-                console.warn('⚠️ Check tables failed to load:', err);
-              }
-            });
+            this.isGeneratingMatnr.set(false);
+            console.log('✅ Material number ready');
           },
           error: (err: any) => {
-            // Show form even if material number generation fails
-            this.isLoading.set(false);
-            console.warn('⚠️ Material number failed, loading check tables anyway:', err);
-            
-            // Still try to load check tables
-            this.checkTableService.fetchCheckTables().subscribe({
-              next: () => {
-                console.log('✅ Check tables loaded in background');
-              },
-              error: (err: any) => {
-                console.warn('⚠️ Check tables failed to load:', err);
-              }
-            });
+            this.isGeneratingMatnr.set(false);
+            console.warn('⚠️ Material number failed:', err);
           }
+        });
+
+        // Fire check tables in background (non-blocking)
+        this.checkTableService.fetchCheckTables().subscribe({
+          next: () => console.log('✅ Check tables loaded in background'),
+          error: (err: any) => console.warn('⚠️ Check tables failed to load:', err)
         });
       },
       error: (err) => {

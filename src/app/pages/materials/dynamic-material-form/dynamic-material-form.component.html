@@ -2,12 +2,6 @@
   <!-- Toast Messages -->
   <p-toast></p-toast>
 
-  <!-- Loading State -->
-  <div *ngIf="isLoading()" class="loading-state">
-    <p-progressSpinner></p-progressSpinner>
-    <p>Loading form metadata...</p>
-  </div>
-
   <!-- Error State -->
   <p-message 
     *ngIf="error()" 
@@ -24,8 +18,8 @@
     styleClass="success-message">
   </p-message>
 
-  <!-- Form Content -->
-  <div *ngIf="!isLoading()" class="form-content">
+  <!-- Form Content - always visible, no longer gated by isLoading -->
+  <div class="form-content">
     <p-card styleClass="material-card">
       <ng-template pTemplate="header">
         <div class="card-header">
@@ -40,8 +34,9 @@
             <i class="pi pi-search"></i>
             <span>{{ materialNumberField.description }}</span>
           </div>
-          <div class="field-group">
+          <div class="field-group matnr-field-group">
             <input 
+              *ngIf="!isGeneratingMatnr()"
               pInputText 
               formControlName="MATNR"
               [readonly]="true"
@@ -49,10 +44,14 @@
               [pTooltip]="'This field is auto-generated'"
               tooltipPosition="right"
             />
+            <!-- Skeleton while material number is generating -->
+            <div *ngIf="isGeneratingMatnr()" class="matnr-skeleton">
+              <div class="skeleton-bar matnr-skeleton-bar"></div>
+            </div>
           </div>
         </div>
 
-        <!-- Dynamic Fields -->
+        <!-- Dynamic Fields Panel -->
         <p-panel [toggleable]="true">
           <ng-template pTemplate="header">
             <div class="attributes-header">
@@ -61,7 +60,18 @@
             </div>
           </ng-template>
 
-          <div class="form-section">
+          <!-- Skeleton while metadata loads -->
+          <div *ngIf="isLoading()" class="form-section">
+            <div class="fields-grid">
+              <div *ngFor="let s of skeletonFields" class="field-group skeleton-field-group">
+                <div class="skeleton-bar skeleton-label"></div>
+                <div class="skeleton-bar skeleton-input"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real fields once metadata is ready -->
+          <div *ngIf="!isLoading()" class="form-section">
             <div class="fields-grid">
               <div *ngFor="let field of formFields(); trackBy: trackByFieldName" class="field-group">
                 <label [for]="field.fieldName">
@@ -136,7 +146,7 @@
             label="Submit"
             icon="pi pi-check"
             [loading]="isSubmitting()"
-            [disabled]="materialForm.invalid || isSubmitting()"
+            [disabled]="!metadataLoaded() || materialForm.invalid || isSubmitting()"
           ></p-button>
           <p-button 
             type="button"
