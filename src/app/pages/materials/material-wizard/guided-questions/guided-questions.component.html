@@ -1,0 +1,147 @@
+<div class="guided-questions-container">
+  <!-- Progress Stepper -->
+  <div class="progress-stepper">
+    <div class="step completed">
+      <div class="step-circle">
+        <i class="pi pi-check"></i>
+      </div>
+      <span class="step-label">Initial Selection</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step active">
+      <div class="step-circle">2</div>
+      <span class="step-label">Guided Questions</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-circle">3</div>
+      <span class="step-label">Recommended Sections</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <p-card styleClass="wizard-card">
+    <ng-template pTemplate="header">
+      <div class="wizard-header">
+        <h1>
+          <i class="pi pi-question-circle"></i> Answer a Few Questions
+        </h1>
+        <p class="wizard-subtitle">
+          We'll recommend which sections to complete based on your answers
+        </p>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      @if (!showRecommendations()) {
+        <!-- Questions Section -->
+        <div class="questions-section">
+          <p-message 
+            severity="info" 
+            text="Select all that apply to your material creation needs">
+          </p-message>
+
+          <div class="questions-list">
+            @for (question of questions; track question.id) {
+              <div class="question-card" [class.answered]="question.answer">
+                <div class="question-content">
+                  <div class="question-checkbox">
+                    <p-checkbox 
+                      [(ngModel)]="question.answer"
+                      [binary]="true"
+                      inputId="{{question.id}}">
+                    </p-checkbox>
+                  </div>
+                  <div class="question-text">
+                    <label [for]="question.id" class="question-title">
+                      {{ question.text }}
+                    </label>
+                    @if (question.description) {
+                      <p class="question-description">{{ question.description }}</p>
+                    }
+                  </div>
+                  @if (question.answer) {
+                    <i class="pi pi-check-circle check-icon"></i>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="question-summary">
+            <p-message 
+              severity="success" 
+              [text]="'You have answered ' + getAnsweredCount() + ' out of ' + questions.length + ' questions'">
+            </p-message>
+          </div>
+        </div>
+      } @else {
+        <!-- Recommendations Section -->
+        <div class="recommendations-section">
+          <div class="recommendations-header">
+            <h2>
+              <i class="pi pi-lightbulb"></i> Recommended Sections
+            </h2>
+            <p>Based on your answers, we recommend completing these sections:</p>
+          </div>
+
+          <div class="recommendations-list">
+            @for (rec of recommendations(); track rec.blockId) {
+              <div class="recommendation-card" [ngClass]="getPriorityClass(rec.priority)">
+                <div class="rec-header">
+                  <h3>{{ rec.blockName }}</h3>
+                  <p-badge 
+                    [value]="rec.priority.toUpperCase()" 
+                    [severity]="getPrioritySeverity(rec.priority)">
+                  </p-badge>
+                </div>
+                <p class="rec-reason">
+                  <i class="pi pi-info-circle"></i>
+                  {{ rec.reason }}
+                </p>
+              </div>
+            }
+          </div>
+
+          <p-message 
+            severity="info" 
+            styleClass="info-message">
+            <ng-template pTemplate>
+              <div class="custom-message">
+                <i class="pi pi-info-circle"></i>
+                <span>You can modify this selection in the next step by selecting or deselecting sections</span>
+              </div>
+            </ng-template>
+          </p-message>
+        </div>
+      }
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <div class="wizard-actions">
+        <p-button 
+          label="Back"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          (onClick)="onBack()">
+        </p-button>
+
+        @if (!showRecommendations()) {
+          <p-button 
+            label="Generate Recommendations"
+            icon="pi pi-lightbulb"
+            [disabled]="!hasAnswers()"
+            (onClick)="onGenerateRecommendations()">
+          </p-button>
+        } @else {
+          <p-button 
+            label="Proceed to Sections"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            (onClick)="onProceedToSections()">
+          </p-button>
+        }
+      </div>
+    </ng-template>
+  </p-card>
+</div>

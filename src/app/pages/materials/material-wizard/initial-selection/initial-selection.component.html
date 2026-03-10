@@ -1,0 +1,177 @@
+<div class="initial-selection-container">
+  <p-toast></p-toast>
+
+  <div class="wizard-header">
+    <h1>Create New Material</h1>
+    <p class="wizard-subtitle">Step 1: Initial Selection</p>
+
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+      <div class="progress-step active">
+        <span class="step-number">1</span>
+        <span class="step-label">Initial Selection</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step">
+        <span class="step-number">2</span>
+        <span class="step-label">View Selection</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step">
+        <span class="step-number">3</span>
+        <span class="step-label">Data Entry</span>
+      </div>
+    </div>
+  </div>
+
+  <p-card styleClass="selection-card">
+    <ng-template pTemplate="header">
+      <div class="card-header">
+        <i class="pi pi-info-circle"></i>
+        <span>Material Information</span>
+      </div>
+    </ng-template>
+
+    @if (isLoading()) {
+      <div class="loading-skeleton">
+        <div class="skeleton-field">
+          <div class="skeleton-bar skeleton-label"></div>
+          <div class="skeleton-bar skeleton-input"></div>
+        </div>
+        <div class="skeleton-field">
+          <div class="skeleton-bar skeleton-label"></div>
+          <div class="skeleton-bar skeleton-input"></div>
+        </div>
+        <div class="skeleton-field">
+          <div class="skeleton-bar skeleton-label"></div>
+          <div class="skeleton-bar skeleton-input"></div>
+        </div>
+      </div>
+    } @else {
+      <form [formGroup]="selectionForm" class="selection-form">
+        <!-- Industry Sector -->
+        <div class="form-field">
+          <label for="industrySector" class="required">
+            Industry Sector
+            <span class="mandatory">*</span>
+          </label>
+          <p-select
+            id="industrySector"
+            formControlName="industrySector"
+            [options]="industrySectorOptions()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select Industry Sector"
+            [showClear]="true"
+            styleClass="w-full"
+          ></p-select>
+          @if (selectionForm.get('industrySector')?.invalid && selectionForm.get('industrySector')?.touched) {
+            <small class="error-text">Industry Sector is required</small>
+          }
+        </div>
+
+        <!-- Material Type -->
+        <div class="form-field">
+          <label for="materialType" class="required">
+            Material Type
+            <span class="mandatory">*</span>
+          </label>
+          <p-select
+            id="materialType"
+            formControlName="materialType"
+            [options]="materialTypeOptions()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select Material Type"
+            [showClear]="true"
+            styleClass="w-full"
+          ></p-select>
+          @if (selectionForm.get('materialType')?.invalid && selectionForm.get('materialType')?.touched) {
+            <small class="error-text">Material Type is required</small>
+          }
+        </div>
+
+        <!-- Plant (Optional) -->
+        <div class="form-field">
+          <label for="plant">
+            Plant (Optional)
+          </label>
+          <p-select
+            id="plant"
+            formControlName="plant"
+            [options]="plantOptions()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select Plant (Optional)"
+            [showClear]="true"
+            styleClass="w-full"
+          ></p-select>
+          <small class="info-text">
+            <i class="pi pi-info-circle"></i>
+            Plant can be configured later in organizational levels
+          </small>
+        </div>
+
+        <!-- Selection Mode -->
+        <div class="form-field">
+          <label>How would you like to proceed?</label>
+          <div class="selection-mode-cards">
+            <div 
+              class="mode-card" 
+              [class.selected]="selectionForm.get('selectionMode')?.value === 'guided'"
+              (click)="selectMode('guided')">
+              <div class="mode-header">
+                <i class="pi pi-question-circle"></i>
+                <h3>Guided Questions</h3>
+                <p-badge 
+                  value="Recommended" 
+                  severity="success" 
+                  styleClass="mode-badge">
+                </p-badge>
+              </div>
+              <p class="mode-description">Answer a few questions and we'll recommend which sections to complete</p>
+            </div>
+            
+            <div 
+              class="mode-card" 
+              [class.selected]="selectionForm.get('selectionMode')?.value === 'manual'"
+              (click)="selectMode('manual')">
+              <div class="mode-header">
+                <i class="pi pi-th-large"></i>
+                <h3>Manual Selection</h3>
+                <p-badge 
+                  value="Advanced" 
+                  severity="info" 
+                  styleClass="mode-badge">
+                </p-badge>
+              </div>
+              <p class="mode-description">View all available sections and select which ones to complete</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <p-button 
+            type="button"
+            label="Cancel"
+            icon="pi pi-times"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="onCancel()"
+            [disabled]="isSubmitting()"
+          ></p-button>
+          <p-button 
+            type="button"
+            label="Select Views"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            (onClick)="onSelectViews()"
+            [disabled]="!isFormValid() || isSubmitting()"
+            [loading]="isSubmitting()"
+          ></p-button>
+        </div>
+      </form>
+    }
+  </p-card>
+</div>

@@ -1,0 +1,254 @@
+<div class="view-selector-container">
+  <p-toast />
+
+  <!-- Header Section -->
+  <div class="wizard-header">
+    <div class="header-content">
+      <h1 class="wizard-title">Select Material Sections</h1>
+      <p class="wizard-subtitle">Click on a section to enter or edit data</p>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+      <div class="progress-step completed">
+        <span class="step-number">1</span>
+        <span class="step-label">Initial Selection</span>
+      </div>
+      <div class="progress-line completed"></div>
+      <div class="progress-step active">
+        <span class="step-number">2</span>
+        <span class="step-label">View Selection</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step">
+        <span class="step-number">3</span>
+        <span class="step-label">Data Entry</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-skeleton">
+      @for (i of [1,2,3,4,5,6,7,8]; track i) {
+        <p-skeleton width="100%" height="120px" styleClass="mb-3" />
+      }
+    </div>
+  }
+
+  <!-- Main Content -->
+  @if (!isLoading()) {
+    <!-- Statistics Bar -->
+    <div class="statistics-bar">
+      <div class="stat-card">
+        <i class="pi pi-box stat-icon"></i>
+        <div class="stat-content">
+          <span class="stat-value">{{ progressStats().total }}</span>
+          <span class="stat-label">Total Sections</span>
+        </div>
+      </div>
+
+      <div class="stat-card completed">
+        <i class="pi pi-check-circle stat-icon"></i>
+        <div class="stat-content">
+          <span class="stat-value">{{ progressStats().completed }}</span>
+          <span class="stat-label">Completed</span>
+        </div>
+      </div>
+
+      <div class="stat-card in-progress">
+        <i class="pi pi-clock stat-icon"></i>
+        <div class="stat-content">
+          <span class="stat-value">{{ progressStats().inProgress }}</span>
+          <span class="stat-label">In Progress</span>
+        </div>
+      </div>
+
+      <div class="stat-card not-started">
+        <i class="pi pi-circle stat-icon"></i>
+        <div class="stat-content">
+          <span class="stat-value">{{ progressStats().notStarted }}</span>
+          <span class="stat-label">Not Started</span>
+        </div>
+      </div>
+
+      @if (progressStats().hasErrors > 0) {
+        <div class="stat-card error">
+          <i class="pi pi-exclamation-triangle stat-icon"></i>
+          <div class="stat-content">
+            <span class="stat-value">{{ progressStats().hasErrors }}</span>
+            <span class="stat-label">Has Errors</span>
+          </div>
+        </div>
+      }
+
+      <div class="stat-card progress">
+        <div class="stat-content">
+          <span class="stat-value">{{ progressStats().completionPercentage }}%</span>
+          <span class="stat-label">Complete</span>
+          <div class="progress-bar-mini">
+            <div class="progress-fill" [style.width.%]="progressStats().completionPercentage"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="filter-section">
+      <h3>Filter Sections</h3>
+      <div class="filter-buttons">
+        <button 
+          pButton 
+          label="All Sections" 
+          [outlined]="selectedFilter() !== 'all'"
+          (click)="applyFilter('all')"
+          icon="pi pi-list"
+          class="filter-btn">
+        </button>
+        <button 
+          pButton 
+          label="Incomplete" 
+          [outlined]="selectedFilter() !== 'incomplete'"
+          (click)="applyFilter('incomplete')"
+          icon="pi pi-exclamation-circle"
+          class="filter-btn">
+        </button>
+        <button 
+          pButton 
+          label="Completed" 
+          [outlined]="selectedFilter() !== 'complete'"
+          (click)="applyFilter('complete')"
+          icon="pi pi-check"
+          class="filter-btn">
+        </button>
+      </div>
+    </div>
+
+    <!-- Sections Grid -->
+    <div class="sections-grid">
+      @for (block of filteredBlocks(); track block.blockId) {
+        <div 
+          class="section-card" 
+          [class]="getStatusColorClass(block.statusColor)"
+          [class.recommended]="block.isRecommended"
+          (click)="onSelectSection(block)">
+          
+          <!-- Status Indicator -->
+          <div class="status-indicator" [class]="getStatusColorClass(block.statusColor)">
+            <div class="status-dot"></div>
+          </div>
+
+          <!-- Recommended Badge -->
+          @if (block.isRecommended) {
+            <div class="recommended-badge">
+              <i class="pi pi-lightbulb"></i>
+            </div>
+          }
+
+          <!-- Mandatory Badge -->
+          @if (block.isMandatory) {
+            <div class="mandatory-badge">
+              <i class="pi pi-star-fill"></i>
+            </div>
+          }
+
+          <!-- Card Header -->
+          <div class="card-header">
+            <i [class]="block.icon + ' card-icon'"></i>
+            <div class="card-title-section">
+              <h3 class="card-title">{{ block.blockName }}</h3>
+              <span class="card-category">{{ block.category }}</span>
+            </div>
+          </div>
+
+          <!-- Card Description -->
+          <p class="card-description">{{ block.description }}</p>
+
+          <!-- Progress Info -->
+          <div class="progress-info">
+            <div class="progress-text">
+              <span class="progress-fields">{{ block.completedFieldCount }}/{{ block.fieldCount }} fields</span>
+              <span class="progress-percentage">
+                {{ block.fieldCount > 0 ? ((block.completedFieldCount / block.fieldCount) * 100).toFixed(0) : 0 }}%
+              </span>
+            </div>
+            <div class="progress-bar">
+              <div 
+                class="progress-bar-fill" 
+                [style.width.%]="block.fieldCount > 0 ? (block.completedFieldCount / block.fieldCount) * 100 : 0">
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Label -->
+          <div class="status-label" [class]="getStatusColorClass(block.statusColor)">
+            @switch (block.statusType) {
+              @case ('NOT_STARTED') {
+                <i class="pi pi-circle"></i>
+                <span>Not Started</span>
+              }
+              @case ('IN_PROGRESS') {
+                <i class="pi pi-clock"></i>
+                <span>In Progress</span>
+              }
+              @case ('COMPLETED') {
+                <i class="pi pi-check-circle"></i>
+                <span>Completed</span>
+              }
+              @case ('ERROR') {
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>Has Errors</span>
+              }
+            }
+          </div>
+
+          <!-- Hover Action -->
+          <div class="card-action">
+            <i class="pi pi-arrow-right"></i>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Empty State -->
+    @if (filteredBlocks().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-inbox empty-icon"></i>
+        <h3>No sections found</h3>
+        <p>Try changing your filter selection</p>
+      </div>
+    }
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button 
+        pButton 
+        label="Back" 
+        icon="pi pi-arrow-left"
+        [outlined]="true"
+        (click)="onBack()"
+        class="btn-secondary">
+      </button>
+
+      <div class="right-buttons">
+        <button 
+          pButton 
+          label="Save Draft" 
+          icon="pi pi-save"
+          [outlined]="true"
+          (click)="onSaveDraft()"
+          class="btn-draft">
+        </button>
+
+        <button 
+          pButton 
+          label="Submit Material" 
+          icon="pi pi-check"
+          (click)="onSubmit()"
+          [disabled]="progressStats().completionPercentage < 100"
+          class="btn-primary">
+        </button>
+      </div>
+    </div>
+  }
+</div>

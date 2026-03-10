@@ -1,0 +1,152 @@
+<div class="section-detail-container">
+  <p-toast />
+
+  <!-- Progress Stepper -->
+  <div class="progress-stepper">
+    <div class="step completed">
+      <div class="step-circle">
+        <i class="pi pi-check"></i>
+      </div>
+      <span class="step-label">Initial Selection</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step completed">
+      <div class="step-circle">
+        <i class="pi pi-check"></i>
+      </div>
+      <span class="step-label">View Selection</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step active">
+      <div class="step-circle">3</div>
+      <span class="step-label">Data Entry</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <p-card styleClass="section-card">
+    <ng-template pTemplate="header">
+      <div class="section-header">
+        <div class="header-content">
+          <h1>
+            <i class="pi pi-file-edit"></i>
+            {{ sectionBlock()?.uiAssignmentBlock || 'Section Detail' }}
+          </h1>
+          <p class="section-subtitle">Complete the required fields for this section</p>
+        </div>
+        <button 
+          pButton 
+          type="button"
+          icon="pi pi-times"
+          class="p-button-text p-button-rounded"
+          (click)="onCancel()">
+        </button>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      @if (isLoading()) {
+        <div class="loading-state">
+          <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+          <p>Loading section data...</p>
+        </div>
+      } @else if (sectionBlock()) {
+        <form [formGroup]="sectionForm" class="section-form">
+          @for (subject of sectionBlock()!.subjects; track subject.subject) {
+            <div class="subject-section">
+              <h2 class="subject-title">
+                <i class="pi pi-folder"></i>
+                {{ subject.subject }}
+              </h2>
+
+              <div class="fields-grid">
+                @for (field of subject.fields; track field.fieldName) {
+                  <div class="form-field" 
+                    [class.full-width]="field.uiControlType === 'TEXT'"
+                    [class.mandatory]="field.isMandatory">
+                    
+                    <label [for]="getFieldControlName(field)">
+                      {{ field.description || field.fieldName }}
+                      @if (field.isMandatory) {
+                        <span class="mandatory-star">*</span>
+                      }
+                    </label>
+
+                    @if (field.uiControlType === 'TEXT') {
+                      <input 
+                        pInputText 
+                        [id]="getFieldControlName(field)"
+                        [formControlName]="getFieldControlName(field)"
+                        [placeholder]="field.description || field.fieldName"
+                        class="w-full" />
+                    } @else if (field.uiControlType === 'NUMBER') {
+                      <input 
+                        pInputText 
+                        type="number"
+                        [id]="getFieldControlName(field)"
+                        [formControlName]="getFieldControlName(field)"
+                        [placeholder]="field.description || field.fieldName"
+                        class="w-full" />
+                    } @else if (field.uiControlType === 'DATE_PICKER') {
+                      <input 
+                        pInputText 
+                        type="date"
+                        [id]="getFieldControlName(field)"
+                        [formControlName]="getFieldControlName(field)"
+                        class="w-full" />
+                    } @else if (field.uiControlType === 'DROPDOWN') {
+                      <p-select 
+                        [id]="getFieldControlName(field)"
+                        [formControlName]="getFieldControlName(field)"
+                        [options]="field.passableValues || field.checkTableValues || []"
+                        optionLabel="displayValue"
+                        optionValue="value"
+                        [placeholder]="'Select ' + (field.description || field.fieldName)"
+                        styleClass="w-full" />
+                    } @else {
+                      <input 
+                        pInputText 
+                        [id]="getFieldControlName(field)"
+                        [formControlName]="getFieldControlName(field)"
+                        [placeholder]="field.description || field.fieldName"
+                        class="w-full" />
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </form>
+      }
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <div class="section-actions">
+        <p-button 
+          label="Cancel"
+          icon="pi pi-times"
+          severity="secondary"
+          (onClick)="onCancel()">
+        </p-button>
+
+        <div class="action-group">
+          <p-button 
+            label="Save"
+            icon="pi pi-save"
+            severity="success"
+            [disabled]="!sectionForm || isLoading()"
+            (onClick)="onSave()">
+          </p-button>
+
+          <p-button 
+            label="Save & Next"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            [disabled]="!sectionForm || isLoading()"
+            (onClick)="onSaveAndNext()">
+          </p-button>
+        </div>
+      </div>
+    </ng-template>
+  </p-card>
+</div>

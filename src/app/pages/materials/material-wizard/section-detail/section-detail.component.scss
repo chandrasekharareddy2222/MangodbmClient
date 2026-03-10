@@ -1,0 +1,336 @@
+.section-detail-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 0.75rem;
+
+  // Progress Stepper
+  .progress-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+
+      .step-circle {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: #e5e7eb;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.35rem;
+        transition: all 0.3s ease;
+      }
+
+      .step-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+      }
+
+      &.completed .step-circle {
+        background: #10b981;
+        color: white;
+      }
+
+      &.active .step-circle {
+        background: #6366f1;
+        color: white;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+      }
+
+      &.active .step-label {
+        color: #6366f1;
+        font-weight: 600;
+      }
+    }
+
+    .step-line {
+      width: 3rem;
+      height: 2px;
+      background: #e5e7eb;
+      margin: 0 0.5rem 1.5rem 0.5rem;
+
+      &.completed {
+        background: #10b981;
+      }
+    }
+  }
+
+  // Section Card
+  ::ng-deep .section-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .p-card-header {
+      padding: 1.25rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+
+      .section-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+
+        .header-content {
+          flex: 1;
+
+          h1 {
+            margin: 0 0 0.35rem 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            i {
+              font-size: 1.4rem;
+            }
+          }
+
+          .section-subtitle {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.95;
+            font-weight: 400;
+          }
+        }
+
+        .p-button-text {
+          color: white;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+          }
+        }
+      }
+    }
+
+    .p-card-body {
+      padding: 0;
+    }
+
+    .p-card-content {
+      padding: 1.5rem;
+      min-height: 300px;
+    }
+
+    .p-card-footer {
+      padding: 1rem 1.5rem;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+    }
+  }
+
+  // Loading State
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: #6b7280;
+
+    i {
+      margin-bottom: 1rem;
+      color: #6366f1;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+  }
+
+  // Section Form
+  .section-form {
+    .subject-section {
+      margin-bottom: 2rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .subject-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        i {
+          color: #6366f1;
+          font-size: 1rem;
+        }
+      }
+
+      .fields-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+
+        .form-field {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+
+          &.full-width {
+            grid-column: 1 / -1;
+          }
+
+          label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+
+            .mandatory-star {
+              color: #ef4444;
+              margin-left: 0.15rem;
+            }
+          }
+
+          &.mandatory label {
+            &::before {
+              content: '';
+              width: 3px;
+              height: 3px;
+              background: #ef4444;
+              border-radius: 50%;
+              display: inline-block;
+              margin-right: 0.25rem;
+            }
+          }
+
+          ::ng-deep .p-select,
+          ::ng-deep .p-inputtext {
+            font-size: 0.875rem;
+          }
+
+          .help-text {
+            color: #6b7280;
+            font-size: 0.75rem;
+            margin-top: 0.15rem;
+          }
+        }
+      }
+    }
+  }
+
+  // Section Actions
+  .section-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+
+    .action-group {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    ::ng-deep p-button button {
+      font-size: 0.875rem;
+      padding: 0.6rem 1.25rem;
+    }
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    padding: 0.75rem 0.5rem;
+
+    .progress-stepper {
+      padding: 0.5rem;
+
+      .step {
+        .step-circle {
+          width: 1.75rem;
+          height: 1.75rem;
+          font-size: 0.8rem;
+        }
+
+        .step-label {
+          font-size: 0.65rem;
+        }
+      }
+
+      .step-line {
+        width: 2rem;
+        margin: 0 0.25rem 1.5rem 0.25rem;
+      }
+    }
+
+    ::ng-deep .section-card {
+      .p-card-header {
+        padding: 1rem;
+
+        .section-header {
+          .header-content h1 {
+            font-size: 1.25rem;
+          }
+
+          .header-content .section-subtitle {
+            font-size: 0.8rem;
+          }
+        }
+      }
+
+      .p-card-content {
+        padding: 1rem;
+      }
+
+      .p-card-footer {
+        padding: 0.75rem 1rem;
+      }
+    }
+
+    .section-form {
+      .subject-section {
+        .subject-title {
+          font-size: 1rem;
+        }
+
+        .fields-grid {
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+
+          .form-field.full-width {
+            grid-column: 1;
+          }
+        }
+      }
+    }
+
+    .section-actions {
+      flex-direction: column;
+
+      .action-group {
+        width: 100%;
+        flex-direction: column;
+      }
+
+      ::ng-deep p-button {
+        width: 100%;
+
+        button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}

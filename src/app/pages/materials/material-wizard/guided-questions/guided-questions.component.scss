@@ -1,0 +1,411 @@
+.guided-questions-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1rem 0.75rem;
+
+  // Progress Stepper
+  .progress-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+
+      .step-circle {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: #e5e7eb;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.35rem;
+        transition: all 0.3s ease;
+      }
+
+      .step-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+      }
+
+      &.completed .step-circle {
+        background: #10b981;
+        color: white;
+      }
+
+      &.active .step-circle {
+        background: #6366f1;
+        color: white;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+      }
+
+      &.active .step-label {
+        color: #6366f1;
+        font-weight: 600;
+      }
+    }
+
+    .step-line {
+      width: 3rem;
+      height: 2px;
+      background: #e5e7eb;
+      margin: 0 0.5rem 1.5rem 0.5rem;
+    }
+  }
+
+  // Wizard Card
+  ::ng-deep .wizard-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .p-card-header {
+      padding: 1.25rem 1.5rem 0.75rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+
+      .wizard-header {
+        h1 {
+          margin: 0 0 0.35rem 0;
+          font-size: 1.5rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          i {
+            font-size: 1.4rem;
+          }
+        }
+
+        .wizard-subtitle {
+          margin: 0;
+          font-size: 0.9rem;
+          opacity: 0.95;
+          font-weight: 400;
+        }
+      }
+    }
+
+    .p-card-body {
+      padding: 0;
+    }
+
+    .p-card-content {
+      padding: 1.25rem 1.5rem;
+    }
+
+    .p-card-footer {
+      padding: 1rem 1.5rem;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+    }
+  }
+
+  // Questions Section
+  .questions-section {
+    ::ng-deep .p-message {
+      margin-bottom: 1.25rem;
+      border-radius: 6px;
+    }
+
+    .questions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+
+      .question-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.2s ease;
+        background: white;
+        cursor: pointer;
+
+        &:hover {
+          border-color: #c7d2fe;
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+        }
+
+        &.answered {
+          border-color: #6366f1;
+          background: #f0f1ff;
+        }
+
+        .question-content {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.75rem;
+
+          .question-checkbox {
+            flex-shrink: 0;
+            padding-top: 0.15rem;
+          }
+
+          .question-text {
+            flex: 1;
+
+            .question-title {
+              display: block;
+              font-size: 0.95rem;
+              font-weight: 600;
+              color: #1f2937;
+              margin-bottom: 0.25rem;
+              cursor: pointer;
+            }
+
+            .question-description {
+              font-size: 0.8rem;
+              color: #6b7280;
+              margin: 0;
+              line-height: 1.4;
+            }
+          }
+
+          .check-icon {
+            color: #10b981;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+          }
+        }
+      }
+    }
+
+    .question-summary {
+      margin-top: 1rem;
+      
+      ::ng-deep .p-message {
+        border-radius: 6px;
+      }
+    }
+  }
+
+  // Recommendations Section
+  .recommendations-section {
+    .recommendations-header {
+      margin-bottom: 1.25rem;
+
+      h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        i {
+          color: #f59e0b;
+          font-size: 1.3rem;
+        }
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #6b7280;
+      }
+    }
+
+    .recommendations-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+
+      .recommendation-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        background: white;
+        transition: all 0.2s ease;
+
+        &:hover {
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        &.priority-high {
+          border-color: #fca5a5;
+          background: #fef2f2;
+        }
+
+        &.priority-medium {
+          border-color: #fcd34d;
+          background: #fffbeb;
+        }
+
+        &.priority-low {
+          border-color: #93c5fd;
+          background: #eff6ff;
+        }
+
+        .rec-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+
+          h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+          }
+
+          ::ng-deep .p-badge {
+            font-size: 0.65rem;
+          }
+        }
+
+        .rec-reason {
+          margin: 0;
+          font-size: 0.85rem;
+          color: #6b7280;
+          display: flex;
+          align-items: flex-start;
+          gap: 0.35rem;
+
+          i {
+            color: #6366f1;
+            font-size: 0.85rem;
+            margin-top: 0.1rem;
+            flex-shrink: 0;
+          }
+        }
+      }
+    }
+
+    .info-message {
+      border-radius: 6px;
+
+      .custom-message {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+
+        i {
+          margin-top: 0.1rem;
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+
+  // Wizard Actions
+  .wizard-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+
+    ::ng-deep p-button button {
+      font-size: 0.875rem;
+      padding: 0.6rem 1.25rem;
+    }
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    padding: 0.75rem 0.5rem;
+
+    .progress-stepper {
+      padding: 0.5rem;
+
+      .step {
+        .step-circle {
+          width: 1.75rem;
+          height: 1.75rem;
+          font-size: 0.8rem;
+        }
+
+        .step-label {
+          font-size: 0.65rem;
+        }
+      }
+
+      .step-line {
+        width: 2rem;
+        margin: 0 0.25rem 1.5rem 0.25rem;
+      }
+    }
+
+    ::ng-deep .wizard-card {
+      .p-card-header {
+        padding: 1rem;
+
+        .wizard-header h1 {
+          font-size: 1.25rem;
+        }
+
+        .wizard-header .wizard-subtitle {
+          font-size: 0.8rem;
+        }
+      }
+
+      .p-card-content {
+        padding: 1rem;
+      }
+
+      .p-card-footer {
+        padding: 0.75rem 1rem;
+      }
+    }
+
+    .questions-section .questions-list .question-card {
+      padding: 0.75rem;
+
+      .question-content {
+        gap: 0.5rem;
+
+        .question-text .question-title {
+          font-size: 0.875rem;
+        }
+
+        .question-text .question-description {
+          font-size: 0.75rem;
+        }
+      }
+    }
+
+    .recommendations-section {
+      .recommendations-header h2 {
+        font-size: 1.1rem;
+      }
+
+      .recommendations-list .recommendation-card {
+        padding: 0.75rem;
+
+        .rec-header h3 {
+          font-size: 0.9rem;
+        }
+
+        .rec-reason {
+          font-size: 0.8rem;
+        }
+      }
+    }
+
+    .wizard-actions {
+      flex-direction: column;
+
+      ::ng-deep p-button {
+        width: 100%;
+
+        button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}

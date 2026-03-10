@@ -1,0 +1,338 @@
+.initial-selection-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+
+  .wizard-header {
+    text-align: center;
+    margin-bottom: 1rem;
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0 0 0.25rem 0;
+    }
+
+    .wizard-subtitle {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin: 0 0 0.75rem 0;
+    }
+
+    // Progress Indicator
+    .progress-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: var(--surface-card);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+
+        .step-number {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: var(--surface-300);
+          color: var(--text-color-secondary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 0.95rem;
+          transition: all 0.3s ease;
+        }
+
+        .step-label {
+          font-size: 0.75rem;
+          color: var(--text-color-secondary);
+          white-space: nowrap;
+
+          @media (max-width: 768px) {
+            font-size: 0.7rem;
+          }
+        }
+
+        &.completed .step-number {
+          background: var(--green-500);
+          color: white;
+        }
+
+        &.active .step-number {
+          background: var(--primary-color);
+          color: white;
+          box-shadow: 0 0 0 3px var(--primary-100);
+        }
+      }
+
+      .progress-line {
+        width: 60px;
+        height: 2px;
+        background: var(--surface-300);
+        transition: background 0.3s ease;
+
+        @media (max-width: 768px) {
+          width: 2px;
+          height: 20px;
+        }
+
+        &.completed {
+          background: var(--green-500);
+        }
+      }
+    }
+  }
+
+  .selection-card {
+    ::ng-deep .p-card {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+
+      .p-card-header {
+        padding: 0.75rem 1rem;
+      }
+
+      .p-card-body {
+        padding: 1rem;
+      }
+
+      .p-card-content {
+        padding: 0;
+      }
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #374151;
+
+      i {
+        color: #6366f1;
+        font-size: 1.25rem;
+      }
+    }
+  }
+
+  .loading-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem 0;
+
+    .skeleton-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .skeleton-bar {
+      background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    .skeleton-label {
+      height: 1rem;
+      width: 30%;
+    }
+
+    .skeleton-input {
+      height: 2.5rem;
+      width: 100%;
+    }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .selection-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+
+      label {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.875rem;
+
+        .mandatory {
+          color: #ef4444;
+          margin-left: 0.25rem;
+        }
+      }
+
+      ::ng-deep .p-select,
+      ::ng-deep .p-inputtext {
+        font-size: 0.875rem;
+      }
+
+      .error-text {
+        color: #ef4444;
+        font-size: 0.8rem;
+        margin-top: 0.15rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .info-text {
+        color: #6366f1;
+        font-size: 0.8rem;
+        margin-top: 0.15rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+
+        i {
+          font-size: 0.8rem;
+        }
+      }
+    }
+
+    .help-section {
+      margin-top: 0.35rem;
+      margin-bottom: 0.35rem;
+
+      ::ng-deep .p-message {
+        border-radius: 6px;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+
+        .p-message-icon {
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    .selection-mode-cards {
+      margin: 1rem 0;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+
+      .mode-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #ffffff;
+
+        &:hover {
+          border-color: #6366f1;
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+          transform: translateY(-2px);
+        }
+
+        &.selected {
+          border-color: #6366f1;
+          background: #f0f1ff;
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+        }
+
+        .mode-header {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+
+          i {
+            font-size: 1.25rem;
+            color: #6366f1;
+          }
+
+          h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+          }
+
+          ::ng-deep .mode-badge {
+            margin-left: auto;
+            font-size: 0.65rem;
+          }
+        }
+
+        .mode-description {
+          font-size: 0.8rem;
+          color: #6b7280;
+          line-height: 1.4;
+          margin: 0;
+        }
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+
+      p-button {
+        flex: 1;
+
+        ::ng-deep button {
+          width: 100%;
+          font-size: 0.875rem;
+          padding: 0.6rem 1.25rem;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.75rem 0.5rem;
+
+    .wizard-header h1 {
+      font-size: 1.25rem;
+    }
+
+    .wizard-header .wizard-subtitle {
+      font-size: 0.8rem;
+    }
+
+    .selection-form {
+      .selection-mode-cards {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+
+      .form-actions {
+        flex-direction: column;
+
+        p-button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}

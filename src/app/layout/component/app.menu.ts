@@ -42,7 +42,7 @@ export class AppMenu {
                 {
                     label: 'Material Entry',
                     icon: 'pi pi-fw pi-plus-circle',
-                    routerLink: ['/materials/form']
+                    routerLink: ['/materials/wizard/initial']
                 }
             ]
         }
